@@ -1,0 +1,34 @@
+flowchart LR
+
+    subgraph 5GCoreNetwork["5G Core Network"]
+        AMF[AMF]
+        SMF[SMF]
+        NRF[NRF]
+        AUSF[AUSF]
+        UDM[UDM]
+        PCF[PCF]
+        UPF[UPF]
+    end
+
+
+    subgraph UERANSIM["UERANSIM"]
+        gNB[gNB]
+        UE[UE]
+    end
+
+    Server[Internet]
+
+    UE -.->|N1| AMF
+    UE -->|N2| gNB
+    gNB -->|N3| UPF
+    gNB -->|N2| AMF
+    SMF -->|N4| UPF
+    AMF -->|N8| UDM
+    AMF -->|N12| AUSF
+    AUSF -->|N13| UDM
+    AMF -->|N11| SMF
+    SMF -->|N7| PCF
+    SMF -->|N10| UDM
+
+    UPF -->|N6| Server
+    
