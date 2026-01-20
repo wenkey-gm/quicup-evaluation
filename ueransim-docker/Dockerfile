@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     lksctp-tools \
     iproute2 \
     iputils-ping \
+    iperf3 \
     net-tools \
     && rm -rf /var/lib/apt/lists/*
 

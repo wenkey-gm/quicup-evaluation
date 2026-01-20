@@ -2,15 +2,11 @@
 
 5G Core Network setup using Open5GS and UERANSIM.
 
-Tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
-
-WIP: Docker compose not yet work because of same host network https://github.com/aligungr/UERANSIM/issues/673
+Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 
 ## Prerequisites
 
-- Docker & Docker Compose
-- Linux system (for TUN device support)
-- Git (for submodules)
+- Docker & Linux(better SCTP and tun device support)
 
 ## Quick Start (WIP)
 
@@ -39,14 +35,9 @@ docker compose up --build -d
 ## Commands
 
 ```bash
-# View logs
-docker compose logs -f
-
-# Stop services
+# docker commands
+docker compose up --build
 docker compose down
-
-# Rebuild
-docker compose up --build -d
 
 # Update submodules
 git submodule update --remote
