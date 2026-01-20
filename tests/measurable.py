@@ -5,8 +5,8 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-TARGET_IP = "192.168.122.18"
-BIND_IP = "10.45.0.2"
+TARGET_IP = "192.168.xx.x"
+BIND_IP = "10.45.0.x"
 
 
 def run_cmd(cmd, timeout):

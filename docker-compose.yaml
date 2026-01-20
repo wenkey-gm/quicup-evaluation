@@ -1,0 +1,120 @@
+services:
+  mongodb:
+    image: mongo
+    container_name: open5gs-mongodb
+    network_mode: "host"
+    restart: unless-stopped
+    volumes:
+      - mongodb:/data/db
+      - ./open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    environment:
+      - MONGO_INITDB_DATABASE=open5gs
+    command: mongod --bind_ip 127.0.0.1 --port 27018
+
+  webui:
+    network_mode: "host"
+    build:
+      context: ./open5gs
+      dockerfile: docker/webui/Dockerfile
+    image: ${USER}/open5gs-webui
+    container_name: open5gs-webui
+    depends_on:
+      - mongodb
+    environment:
+      - DB_URI=mongodb://127.0.0.1:27018/open5gs
+      - WAIT_HOSTS=127.0.0.1:27018
+
+  base:
+    network_mode: "host"
+    build:
+      context: ./open5gs/docker/${DIST-ubuntu}/${TAG-latest}/base
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-base
+    restart: unless-stopped
+    command: /bin/bash -c "echo 'base' services && sleep infinity"
+
+  run:
+    network_mode: "host"
+    build:
+      context: ./open5gs
+      dockerfile: docker/build/Dockerfile
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - base
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    container_name: open5gs-run
+    hostname: open5gs-run
+    environment:
+      - DB_URI=mongodb://127.0.0.1:27018/open5gs
+      - WAIT_HOSTS=127.0.0.1:27018
+    command: >
+      /bin/bash -c "
+      /wait &&
+      /root/setup.sh &&
+      open5gs-nrfd -D && sleep 2 &&
+      open5gs-scpd -D && sleep 2 &&
+      open5gs-amfd -D &&
+      open5gs-smfd -D &&
+      open5gs-upfd -D &&
+      open5gs-ausfd -D &&
+      open5gs-udmd -D &&
+      open5gs-pcfd -D &&
+      open5gs-nssfd -D &&
+      open5gs-bsfd -D &&
+      open5gs-udrd -D &&
+      sleep infinity
+      "
+
+  ueransim-gnb:
+    network_mode: "host"
+    build:
+      context: .
+      dockerfile: ueransim-docker/Dockerfile
+    image: ${USER}/ueransim
+    container_name: ueransim-gnb
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - ./UERANSIM/config:/ueransim/config
+    environment:
+      - AMF_HOSTNAME=127.0.0.1
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c config/open5gs-gnb.yaml"
+    depends_on:
+      - run
+
+  ueransim-ue:
+    network_mode: "host"
+    build:
+      context: .
+      dockerfile: ueransim-docker/Dockerfile
+    image: ${USER}/ueransim
+    container_name: ueransim-ue
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    environment:
+      - GNB_HOSTNAME=127.0.0.1
+    volumes:
+      - ./UERANSIM/config:/ueransim/config
+    command: /bin/bash -c "sleep 15 && build/nr-ue -c config/open5gs-ue.yaml"
+    depends_on:
+      - ueransim-gnb
+
+volumes:
+  mongodb: {}

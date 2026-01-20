@@ -1,0 +1,23 @@
+# Environment variables
+.env
+
+# Docker volumes
+mongodb/
+home/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artifacts
+*.o
+*.so
+build/
+dist/

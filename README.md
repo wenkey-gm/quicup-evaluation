@@ -1,59 +1,43 @@
-# UERANSIM + Open5GS Network Performance Documentation
+# QUICUP PROJECT
 
-## 1. Working Baseline Topology + Diagram
+5G Core Network setup using Open5GS and UERANSIM.
 
-<p align="center">
-  <img src="basic_topology_structure.png" width="700" alt="Basic Topology">
-</p>
+## Prerequisites
+- Docker & Docker Compose
+- Linux system (for TUN device support)
 
-## 2. Baseline Measurement Results
+## Quick Start
 
-### Performance Metrics
+1. Copy environment template:
+```bash
+cp .env.example .env
+```
 
-- **Bitrate (Mbps) - 9.99; Jitter (ms) - 0.010; Avg RTT (ms) - 0.327**
+2. Edit `.env` with your settings
 
-<p align="center">
-  <img src="plots/network_performance.png" width="500" alt="Network Performance Metrics">
-</p>
+3. Build and start services:
+```bash
+docker compose up --build -d
+```
 
-### Overhead for IPv4
-- GTP-U: 20(IP) + 8(UDP) + 12(GTP-U) = 40 Bytes
-- GTP-U with IPSec: 20(IP)+8(UDP)+12(GTP-U)+58(IPsec) = 98 Bytes
-- QUICUP: 20(IP)+8(UDP)+34(QUIC/Auth Tag)=62 Bytes
+4. Access WebUI: http://localhost:9998
+   - Default credentials: admin/1423
 
-**Approx. 20 bytes more for IPv6**
+## Services
+- **MongoDB**: Database (port 27018)
+- **WebUI**: Management interface (port 9998)
+- **dev**: Open5GS core network
+- **ueransim-gnb**: gNodeB simulator
+- **ueransim-ue**: UE simulator
 
-## 3. QUIC-Based User-Plane Architecture
+## Commands
+```bash
+# View logs
+docker compose logs -f
 
-<p align="center">
-  <img src="quic_diagram.png" width="700" alt="QUIC Architecture">
-</p>
+# Stop services
+docker compose down
 
-**Implementation Approach:**
-
-1. **Direct Replacement**: Replace GTP-U with QUIC streams in the N3 interface
-   - Simplified architecture
-   - Reduced protocol overhead
-   - Requires modifications to both UERANSIM and OPEN5GS
-
-2. **Encapsulation Mode**: Encapsulate GTP-U within QUIC tunnel
-   - Maintains 3GPP compatibility
-   - Easier integration with existing infrastructure
-   - Gradual migration path
-
-
-## 4. QUIC Library Evaluation
-
-| Library | Language | License |
-|---------|----------|---------|
-| **quiche** (Cloudflare) | Rust (C/C++ bindings) | BSD-2-Clause | Production-ready, HTTP/3 support |
-| **msquic** (Microsoft) | C | MIT | IETF RFC 9000, Windows/Azure proven |
-| **ngtcp2** (nghttp2) | C | MIT | Lightweight, minimal dependencies |
-| **lsquic** (LiteSpeed) | C | MIT | High performance, web-optimized |
-| **mvfst** (Meta) | C++ | MIT | Meta-scale tested, advanced congestion control |
-
-### Recommended Implementation: **msquic**
-
-- **Native C API**: Seamless integration with Open5GS C codebase
-- **Cross-platform**: Linux compatibility for 5G deployments
-- **License compatibility**: MIT license suitable for open-source projects
+# Rebuild
+docker compose up --build -d
+```
