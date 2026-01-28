@@ -4,6 +4,14 @@
 
 Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 
+# TODO
+
+- [ ] Migrate the project to Gitlab
+- [ ] Explore few alternatives in 3GPP
+- [ ] Fix static ports address using docker bridge
+- [ ] Start implementation of QUIC with msquic
+
+
 ## Prerequisites
 
 - Docker & Linux(better SCTP and tun device support)
