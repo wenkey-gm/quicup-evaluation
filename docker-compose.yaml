@@ -2,17 +2,17 @@ services:
   mongodb:
     image: mongo
     container_name: open5gs-mongodb
-    network_mode: "host"
+    network_mode: host
     restart: unless-stopped
     volumes:
       - mongodb:/data/db
-      - ./open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro,Z
     environment:
       - MONGO_INITDB_DATABASE=open5gs
     command: mongod --bind_ip 127.0.0.1 --port 27018
 
   webui:
-    network_mode: "host"
+    network_mode: host
     build:
       context: ./open5gs
       dockerfile: docker/webui/Dockerfile
@@ -25,7 +25,7 @@ services:
       - WAIT_HOSTS=127.0.0.1:27018
 
   base:
-    network_mode: "host"
+    network_mode: host
     build:
       context: ./open5gs/docker/${DIST-ubuntu}/${TAG-latest}/base
       args:
@@ -36,7 +36,7 @@ services:
     command: /bin/bash -c "echo 'base' services && sleep infinity"
 
   run:
-    network_mode: "host"
+    network_mode: host
     build:
       context: ./open5gs
       dockerfile: docker/build/Dockerfile
@@ -57,7 +57,6 @@ services:
     hostname: open5gs-run
     environment:
       - DB_URI=mongodb://127.0.0.1:27018/open5gs
-      - WAIT_HOSTS=127.0.0.1:27018
     command: >
       /bin/bash -c "
       /wait &&
@@ -77,11 +76,12 @@ services:
       "
 
   ueransim-gnb:
-    network_mode: "host"
+    network_mode: host
     build:
       context: .
       dockerfile: ueransim-docker/Dockerfile
     image: ${USER}/ueransim
+    privileged: true
     container_name: ueransim-gnb
     restart: unless-stopped
     cap_add:
@@ -89,20 +89,21 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - ./UERANSIM/config:/ueransim/config
+      - ./UERANSIM/config:/ueransim/config:Z
     environment:
       - AMF_HOSTNAME=127.0.0.1
-    command: /bin/bash -c "sleep 10 && build/nr-gnb -c config/open5gs-gnb.yaml"
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
     depends_on:
       - run
 
   ueransim-ue:
-    network_mode: "host"
+    network_mode: host
     build:
       context: .
       dockerfile: ueransim-docker/Dockerfile
     image: ${USER}/ueransim
     container_name: ueransim-ue
+    privileged: true
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
@@ -111,10 +112,10 @@ services:
     environment:
       - GNB_HOSTNAME=127.0.0.1
     volumes:
-      - ./UERANSIM/config:/ueransim/config
-    command: /bin/bash -c "sleep 15 && build/nr-ue -c config/open5gs-ue.yaml"
+      - ./UERANSIM/config:/ueransim/config:Z
+    command: /bin/bash -c "sleep 15 && build/nr-ue -c /ueransim/config/open5gs-ue.yaml"
     depends_on:
       - ueransim-gnb
 
 volumes:
-  mongodb: {}
+  mongodb:
