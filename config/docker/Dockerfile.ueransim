@@ -1,0 +1,18 @@
+ARG dist=ubuntu
+ARG tag=latest
+ARG username=acetcom
+FROM ${username}/${dist}-${tag}-base
+
+WORKDIR /ueransim
+
+COPY UERANSIM .
+
+RUN rm -rf build cmake-build-release cmake-build-debug
+RUN make
+
+ENV PATH="/ueransim/build:${PATH}"
+
+EXPOSE 38412/sctp
+EXPOSE 2152/udp
+
+CMD ["/bin/bash"]
