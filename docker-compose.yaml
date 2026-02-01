@@ -1,4 +1,18 @@
 services:
+  debug-logs:
+    container_name: debug-logs
+    image: amir20/dozzle:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro,Z
+    environment:
+      - DOZZLE_LEVEL=info
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.9
+    restart: unless-stopped
+
   mongodb:
     image: mongo
     container_name: open5gs-mongodb
