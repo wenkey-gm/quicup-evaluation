@@ -20,11 +20,11 @@ services:
       context: .
       dockerfile: ./config/docker/Dockerfile.open5gs.webui
     image: ${USER}/open5gs-webui
+    container_name: open5gs-webui
+    restart: unless-stopped
     networks:
       shared_network:
         ipv4_address: 10.10.0.3
-    container_name: open5gs-webui
-    restart: unless-stopped
     ports:
       - "9999:9999"
     environment:
@@ -66,9 +66,8 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     container_name: open5gs-run
-    hostname: open5gs-run
     sysctls:
-      net.ipv4.ip_forward: 1
+      - net.ipv4.ip_forward=1
     volumes:
       - ./config/open5gs/services:/usr/local/etc/open5gs:Z
     environment:
@@ -76,7 +75,6 @@ services:
     command: >
       /bin/bash -c "
       /wait &&
-      iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE &&
       /root/setup.sh &&
       open5gs-nrfd -D && sleep 2 &&
       open5gs-scpd -D && sleep 2 &&
@@ -117,8 +115,6 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
       - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
-    environment:
-      - AMF_HOSTNAME=10.10.0.10
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-ue:
@@ -145,11 +141,16 @@ services:
       - NET_RAW
     devices:
       - "/dev/net/tun:/dev/net/tun"
-    environment:
-      - GNB_HOSTNAME=10.10.0.4
     volumes:
       - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
-    command: /bin/bash -c "sleep 15 && build/nr-ue -c /ueransim/config/open5gs-ue.yaml"
+    command: /bin/bash -c "
+      sleep 15 &&
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+      until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route add default dev uesimtun0;
+      wait
+      "
 
 volumes:
   mongodb: {}
@@ -158,6 +159,8 @@ networks:
   shared_network:
     name: shared_network
     driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
     ipam:
       config:
-        - subnet: 10.10.0.0/24
+        - subnet: 10.10.0.0/16
