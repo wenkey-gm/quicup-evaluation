@@ -8,7 +8,7 @@ services:
         ipv4_address: 10.10.0.2
     volumes:
       - mongodb:/data/db
-      - ./open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro,Z
+      - ./config/open5gs/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro,Z
     environment:
       - MONGO_INITDB_DATABASE=open5gs
     command: mongod --bind_ip 0.0.0.0 --port 27018
@@ -62,7 +62,7 @@ services:
     container_name: open5gs-run
     hostname: open5gs-run
     volumes:
-      - ./open5gs-config:/usr/local/etc/open5gs:Z
+      - ./config/open5gs:/usr/local/etc/open5gs:Z
     environment:
       - DB_URI=mongodb://10.10.0.2:27018/open5gs
     command: >
@@ -106,7 +106,7 @@ services:
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - ./ueransim-config:/ueransim/config:Z
+      - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     environment:
       - AMF_HOSTNAME=10.10.0.10
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -136,7 +136,7 @@ services:
     environment:
       - GNB_HOSTNAME=10.10.0.4
     volumes:
-      - ./ueransim-config:/ueransim/config:Z
+      - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "sleep 15 && build/nr-ue -c /ueransim/config/open5gs-ue.yaml"
 
 volumes:
