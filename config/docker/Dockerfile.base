@@ -32,8 +32,14 @@ RUN apt-get update && \
     libtins-dev \
     libtalloc-dev \
     iproute2 \
+    make \
+    g++ \
+    iputils-ping \
     ca-certificates \
+    net-tools \
+    lksctp-tools \
     netbase \
+    iptables \
     pkg-config && \
     if apt-cache show libidn-dev > /dev/null 2>&1; then \
     apt-get install -y --no-install-recommends libidn-dev; \

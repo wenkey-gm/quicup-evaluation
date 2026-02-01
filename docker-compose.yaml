@@ -20,13 +20,17 @@ services:
       context: .
       dockerfile: ./config/docker/Dockerfile.open5gs.webui
     image: ${USER}/open5gs-webui
-    container_name: open5gs-webui
-    environment:
-      - DB_URI=mongodb://10.10.0.2:27018/open5gs
-      - WAIT_HOSTS=10.10.0.2:27018
     networks:
       shared_network:
         ipv4_address: 10.10.0.3
+    container_name: open5gs-webui
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    environment:
+      - DB_URI=mongodb://10.10.0.2:27018/open5gs
+      - WAIT_HOSTS=10.10.0.2:27018
+      - HOSTNAME=0.0.0.0
 
   base:
     build:
@@ -36,6 +40,7 @@ services:
         dist: ${DIST-ubuntu}
         tag: ${TAG-latest}
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
+    container_name: quicup-project-ubuntu-base
     restart: unless-stopped
     command: /bin/bash -c "echo 'base' services && sleep infinity"
 
@@ -43,6 +48,7 @@ services:
     depends_on:
       - mongodb
       - base
+    pull_policy: never
     build:
       context: .
       dockerfile: ./config/docker/Dockerfile.open5gs.run
@@ -61,13 +67,16 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     container_name: open5gs-run
     hostname: open5gs-run
+    sysctls:
+      net.ipv4.ip_forward: 1
     volumes:
-      - ./config/open5gs:/usr/local/etc/open5gs:Z
+      - ./config/open5gs/services:/usr/local/etc/open5gs:Z
     environment:
       - DB_URI=mongodb://10.10.0.2:27018/open5gs
     command: >
       /bin/bash -c "
       /wait &&
+      iptables -t nat -A POSTROUTING -s 10.45.0.0/16 ! -o ogstun -j MASQUERADE &&
       /root/setup.sh &&
       open5gs-nrfd -D && sleep 2 &&
       open5gs-scpd -D && sleep 2 &&
@@ -85,8 +94,9 @@ services:
 
   ueransim-gnb:
     depends_on:
-      - run
       - base
+      - run
+    pull_policy: never
     build:
       context: .
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -113,8 +123,9 @@ services:
 
   ueransim-ue:
     depends_on:
-      - run
       - base
+      - run
+    pull_policy: never
     build:
       context: .
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -131,6 +142,7 @@ services:
         ipv4_address: 10.10.0.16
     cap_add:
       - NET_ADMIN
+      - NET_RAW
     devices:
       - "/dev/net/tun:/dev/net/tun"
     environment:

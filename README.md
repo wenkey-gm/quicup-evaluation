@@ -31,22 +31,18 @@ Or if already cloned:
 git submodule update --init --recursive
 ```
 
-1. Build and start services:
+1. Build base image:
+
+```bash
+docker compose build base
+```
+
+2. Build and start services
 
 ```bash
 docker compose up --build -d
 ```
 
-1. Access WebUI: <http://localhost:9999>
+#### Access Web UI
+1. Access WebUI: <http://10.10.0.3:9999>
    - Default credentials: admin/1423
-
-## Commands
-
-```bash
-# docker commands
-docker compose up --build
-docker compose down
-
-# Update submodules
-git submodule update --remote
-```
