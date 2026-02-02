@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-TARGET_IP = "192.168.xx.x"
+TARGET_IP = "8.8.8.8"
 BIND_IP = "10.45.0.x"
 
 
