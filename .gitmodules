@@ -4,6 +4,3 @@
 [submodule "UERANSIM"]
 	path = UERANSIM
 	url = git@github.com:wenkey-gm/UERANSIM.git
-[submodule "pyqlog"]
-	path = pyqlog
-	url = https://github.com/Saeid-jhn/pyqlog
