@@ -6,9 +6,9 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 
 # TODO
 
-- [ ] Migrate the project to Gitlab
+- [x] Migrate the project to Gitlab
+- [x] Fix static ports address using docker bridge
 - [ ] Explore few alternatives in 3GPP
-- [ ] Fix static ports address using docker bridge
 - [ ] Start implementation of QUIC with msquic
 
 
