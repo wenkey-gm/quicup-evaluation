@@ -1,4 +1,4 @@
-# QUICUP PROJECT
+# QUICUP PROJECT (WIP)
 
 5G Core Network setup using Open5GS and UERANSIM.
 
@@ -10,13 +10,14 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 - [x] Fix static ports address using docker bridge
 - [ ] Explore few alternatives in 3GPP
 - [ ] Start implementation of QUIC with msquic
+- [x] Integrate siemens/edge_shark to monitor traffic
 
 
 ## Prerequisites
 
 - Docker & Linux(better SCTP and tun device support)
 
-## Quick Start (WIP)
+## Quick Start
 
 1. Clone repository with submodules:
 
@@ -43,10 +44,14 @@ docker compose build base
 docker compose up --build -d
 ```
 
-### Access Web UI
+### Access UI Elements
 
-1. Access WebUI: <http://10.10.0.3:9999>
+1. Access WebUI: <http://localhost:9999>
    - Default credentials: admin/1423
+
+2. Access Dozzle: <http://localhost:8080/>
+
+3. Access EdgeShark <http://localhost:5001/>
 
 
 ## Connect to Internet
