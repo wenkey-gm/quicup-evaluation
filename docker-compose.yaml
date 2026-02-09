@@ -1,63 +1,91 @@
 services:
+  debug-logs:
+    container_name: debug-logs
+    image: amir20/dozzle:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro,Z
+    environment:
+      - DOZZLE_LEVEL=info
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.9
+    restart: unless-stopped
+
   mongodb:
     image: mongo
     container_name: open5gs-mongodb
-    network_mode: "host"
     restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.2
     volumes:
       - mongodb:/data/db
-      - ./open5gs/docs/assets/webui/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./config/open5gs/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro,Z
     environment:
       - MONGO_INITDB_DATABASE=open5gs
-    command: mongod --bind_ip 127.0.0.1 --port 27018
+    command: mongod --bind_ip 0.0.0.0 --port 27018
 
   webui:
-    network_mode: "host"
-    build:
-      context: ./open5gs
-      dockerfile: docker/webui/Dockerfile
-    image: ${USER}/open5gs-webui
-    container_name: open5gs-webui
     depends_on:
       - mongodb
+    build:
+      context: .
+      dockerfile: ./config/docker/Dockerfile.open5gs.webui
+    image: ${USER}/open5gs-webui
+    container_name: open5gs-webui
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.3
+    ports:
+      - "9999:9999"
     environment:
-      - DB_URI=mongodb://127.0.0.1:27018/open5gs
-      - WAIT_HOSTS=127.0.0.1:27018
+      - DB_URI=mongodb://10.10.0.2:27018/open5gs
+      - WAIT_HOSTS=10.10.0.2:27018
+      - HOSTNAME=0.0.0.0
 
   base:
-    network_mode: "host"
     build:
-      context: ./open5gs/docker/${DIST-ubuntu}/${TAG-latest}/base
+      context: .
+      dockerfile: ./config/docker/Dockerfile.base
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-latest}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-base
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
+    container_name: quicup-project-ubuntu-base
     restart: unless-stopped
     command: /bin/bash -c "echo 'base' services && sleep infinity"
 
   run:
-    network_mode: "host"
+    depends_on:
+      - mongodb
+      - base
+    pull_policy: never
     build:
-      context: ./open5gs
-      dockerfile: docker/build/Dockerfile
+      context: .
+      dockerfile: ./config/docker/Dockerfile.open5gs.run
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-latest}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-build
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     restart: unless-stopped
-    depends_on:
-      - mongodb
-      - base
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.10
     cap_add:
       - NET_ADMIN
     devices:
       - "/dev/net/tun:/dev/net/tun"
     container_name: open5gs-run
-    hostname: open5gs-run
+    sysctls:
+      - net.ipv4.ip_forward=1
+    volumes:
+      - ./config/open5gs/services:/usr/local/etc/open5gs:Z
     environment:
-      - DB_URI=mongodb://127.0.0.1:27018/open5gs
-      - WAIT_HOSTS=127.0.0.1:27018
+      - DB_URI=mongodb://10.10.0.2:27018/open5gs
     command: >
       /bin/bash -c "
       /wait &&
@@ -77,44 +105,77 @@ services:
       "
 
   ueransim-gnb:
-    network_mode: "host"
+    depends_on:
+      - base
+      - run
+    pull_policy: never
     build:
       context: .
-      dockerfile: ueransim-docker/Dockerfile
-    image: ${USER}/ueransim
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    privileged: true
     container_name: ueransim-gnb
     restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.4
     cap_add:
       - NET_ADMIN
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - ./UERANSIM/config:/ueransim/config
-    environment:
-      - AMF_HOSTNAME=127.0.0.1
-    command: /bin/bash -c "sleep 10 && build/nr-gnb -c config/open5gs-gnb.yaml"
-    depends_on:
-      - run
+      - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-ue:
-    network_mode: "host"
+    depends_on:
+      - base
+      - run
+    pull_policy: never
     build:
       context: .
-      dockerfile: ueransim-docker/Dockerfile
-    image: ${USER}/ueransim
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
     container_name: ueransim-ue
+    privileged: true
     restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.16
     cap_add:
       - NET_ADMIN
+      - NET_RAW
     devices:
       - "/dev/net/tun:/dev/net/tun"
-    environment:
-      - GNB_HOSTNAME=127.0.0.1
     volumes:
-      - ./UERANSIM/config:/ueransim/config
-    command: /bin/bash -c "sleep 15 && build/nr-ue -c config/open5gs-ue.yaml"
-    depends_on:
-      - ueransim-gnb
+      - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
+    command: /bin/bash -c "
+      sleep 15 &&
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+      until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route add default dev uesimtun0;
+      wait
+      "
 
 volumes:
   mongodb: {}
+
+networks:
+  shared_network:
+    name: shared_network
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.name: br-open5gs
+    ipam:
+      config:
+        - subnet: 10.10.0.0/16
