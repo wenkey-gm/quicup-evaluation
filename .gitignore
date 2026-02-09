@@ -13,8 +13,17 @@ home/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Latex
 *.log
+*.out
+*.toc
+*.snn
+*.xml
+*.nlo
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
 
 # Build artifacts
 *.o
