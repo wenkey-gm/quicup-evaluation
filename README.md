@@ -8,7 +8,7 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 
 - [x] Migrate the project to Gitlab
 - [x] Fix static ports address using docker bridge
-- [ ] Explore few alternatives in 3GPP
+- [x] Explore few alternatives in 3GPP: SRv6
 - [ ] Start implementation of QUIC with msquic
 - [x] Integrate siemens/edge_shark to monitor traffic
 
@@ -46,12 +46,24 @@ docker compose up --build -d
 
 ### Access UI Elements
 
-1. Access WebUI: <http://localhost:9999>
-   - Default credentials: admin/1423
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| WebUI | <http://localhost:9999> | admin/1423 |
+| Dozzle | <http://localhost:8080/> | - |
+| EdgeShark | <http://localhost:5001/> | - |
 
-2. Access Dozzle: <http://localhost:8080/>
+### Container Network Configuration
 
-3. Access EdgeShark <http://localhost:5001/>
+| Container Name | IP Address | Network | Description |
+|----------------|------------|---------|-------------|
+| open5gs-mongodb | 10.10.0.2 | shared_network | MongoDB database |
+| open5gs-webui | 10.10.0.3 | shared_network | Web management interface |
+| ueransim-gnb | 10.10.0.4 | shared_network | 5G gNodeB |
+| debug-logs | 10.10.0.9 | shared_network | Dozzle log viewer |
+| open5gs-run | 10.10.0.10 | shared_network | 5G Core (NRF, AMF, SMF, UPF, etc.) |
+| ueransim-ue | 10.10.0.16 | shared_network | User Equipment (UE) |
+| gostwire | - | ghost-in-da-edge | Network discovery service |
+| edgeshark | - | ghost-in-da-edge | Packet capture service |
 
 
 ## Connect to Internet
@@ -90,3 +102,9 @@ sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 sudo ip route add 10.45.0.0/16 via 10.10.0.10 dev br-open5gs
 ```
 
+## References
+
+- [MSQUIC GitHub](https://github.com/microsoft/msquic)
+- [QUIC RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)
+- [3GPP TS 29.281 - GTP-U Protocol](https://www.3gpp.org/DynaReport/29281.htm)
+- [Open5GS Documentation](https://open5gs.org/open5gs/docs/)
