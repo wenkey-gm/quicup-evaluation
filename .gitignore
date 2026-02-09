@@ -1,5 +1,5 @@
-# Environment variables
-.env
+# Docs
+measurements/plots/
 
 # Docker volumes
 mongodb/

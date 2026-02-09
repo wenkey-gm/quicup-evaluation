@@ -1,0 +1,19 @@
+[project]
+name = "measurements"
+version = "0.1.0"
+description = ""
+package-mode = false
+authors = [
+    {name = "wenkey-gm",email = "g.m.venkateshmuni@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "seaborn (>=0.13.2,<0.14.0)",
+    "matplotlib (>=3.10.8,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
