@@ -4,6 +4,3 @@
 [submodule "UERANSIM"]
 	path = UERANSIM
 	url = git@github.com:wenkey-gm/UERANSIM.git
-[submodule "msquic"]
-	path = msquic
-	url = https://github.com/microsoft/msquic.git

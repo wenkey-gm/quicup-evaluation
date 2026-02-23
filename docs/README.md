@@ -13,7 +13,7 @@
 - **Bitrate (Mbps) - 9.99; Jitter (ms) - 0.010; Avg RTT (ms) - 0.327**
 
 <p align="center">
-  <img src="plots/network_performance.png" width="500" alt="Network Performance Metrics">
+  <img src="../measurements/plots/bitrate_20260202_174754.png" width="500" alt="Network Performance Metrics">
 </p>
 
 ### Overhead for IPv4
@@ -44,8 +44,8 @@
 
 ## 4. QUIC Library Evaluation
 
-| Library | Language | License |
-|---------|----------|---------|
+| Library | Language | License | Features |
+|---------|----------|---------|----------|
 | **quiche** (Cloudflare) | Rust (C/C++ bindings) | BSD-2-Clause | Production-ready, HTTP/3 support |
 | **msquic** (Microsoft) | C | MIT | IETF RFC 9000, Windows/Azure proven |
 | **ngtcp2** (nghttp2) | C | MIT | Lightweight, minimal dependencies |

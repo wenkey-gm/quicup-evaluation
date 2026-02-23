@@ -1,6 +1,25 @@
 ARG dist=ubuntu
 ARG tag=latest
-FROM ${dist}:${tag}
+
+FROM ${dist}:${tag} As builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+RUN git clone --recursive https://github.com/microsoft/msquic.git
+
+WORKDIR /workspace/msquic
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release \
+    && cmake --install build --prefix /msquic-install
+
+
+FROM ${dist}:${tag} As runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -52,18 +71,9 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 
-WORKDIR /root
-COPY msquic /root/msquic
-RUN set -e && \
-    cd msquic && \
-    mkdir build && \
-    cd build && \
-    cmake -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release .. && \
-    cmake --build . --config Release && \
-    cmake --install . --config Release && \
-    cd /root && \
-    rm -rf msquic
+COPY --from=builder /msquic-install/lib /usr/local/lib
+COPY --from=builder /msquic-install/include /usr/local/include
 
-ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+RUN ldconfig
 
 CMD ["/bin/bash"]
