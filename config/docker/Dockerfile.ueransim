@@ -8,7 +8,7 @@ WORKDIR /ueransim
 COPY UERANSIM .
 
 RUN rm -rf build cmake-build-release cmake-build-debug
-RUN make
+RUN make -j $(nproc) 
 
 ENV PATH="/ueransim/build:${PATH}"
 
