@@ -1,15 +1,16 @@
 # QUICUP PROJECT (WIP)
 
-5G Core Network setup using Open5GS and UERANSIM.
+5G Core Network setup with QUICUP and GTP-U using Open5GS and UERANSIM.
 
-Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
+Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM.
 
 # TODO
 
 - [x] Migrate the project to Gitlab
 - [x] Fix static ports address using docker bridge
 - [x] Explore few alternatives in 3GPP: SRv6
-- [ ] Start implementation of QUIC with msquic
+- [x] implementation of QUIC with msquic
+- [x] Transport mode flag for gnb and upf 
 - [x] Integrate siemens/edge_shark to monitor traffic
 
 
@@ -17,19 +18,19 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM - Worked fine.
 
 - Docker & Linux(better SCTP and tun device support)
 
+1. Create openssl certificates and place in 'config/secrets'
+
+```bash
+openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes -subj "/CN=localhost"
+```
+
 ## Quick Start
 
 1. Clone repository with submodules:
 
 ```bash
-git clone --recurse-submodules https://github.com/wenkey-gm/QUICUP_PROJECT.git
+git clone https://github.com/wenkey-gm/QUICUP_PROJECT.git
 cd QUICUP_PROJECT
-```
-
-Or if already cloned:
-
-```bash
-git submodule update --init --recursive
 ```
 
 1. Build base image:
@@ -42,6 +43,12 @@ docker compose build base
 
 ```bash
 docker compose up --build -d
+```
+
+3. Remove docker compose containers
+
+```bash
+docker compose down
 ```
 
 ### Access UI Elements
@@ -95,7 +102,7 @@ sudo iptables -I DOCKER-USER 1 -o br-open5gs -d 10.45.0.0/16 -j ACCEPT
 sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 ```
 
-1. Add traffic returning from internet to 10.45.0.0/16 forward to 10.10.0.10 via br-open5gs (You may need to re-run Step 4 every time you restart your Docker Compose)
+4. Add traffic returning from internet to 10.45.0.0/16 forward to 10.10.0.10 via br-open5gs (You may need to re-run Step 4 every time you restart your Docker Compose)
 
 
 ```bash
