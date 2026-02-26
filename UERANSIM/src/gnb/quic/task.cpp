@@ -217,10 +217,16 @@ QUIC_STATUS QUIC_API QuicTask::connectionCallback(HQUIC conn, void *context, QUI
 
     case QUIC_CONNECTION_EVENT_DATAGRAM_SEND_STATE_CHANGED: {
         auto state = event->DATAGRAM_SEND_STATE_CHANGED.State;
-        if (state == QUIC_DATAGRAM_SEND_SENT || state == QUIC_DATAGRAM_SEND_CANCELED ||
-            state == QUIC_DATAGRAM_SEND_LOST_DISCARDED)
+        auto *sentBuffer = static_cast<SendContext *>(event->DATAGRAM_SEND_STATE_CHANGED.ClientContext);
+        if (state == QUIC_DATAGRAM_SEND_ACKNOWLEDGED || state == QUIC_DATAGRAM_SEND_ACKNOWLEDGED_SPURIOUS ||
+            state == QUIC_DATAGRAM_SEND_CANCELED || state == QUIC_DATAGRAM_SEND_LOST_DISCARDED)
         {
-            delete static_cast<SendContext *>(event->DATAGRAM_SEND_STATE_CHANGED.ClientContext);
+            if (sentBuffer != nullptr)
+            {
+                delete sentBuffer;
+                // Nullify to be absolutely safe
+                event->DATAGRAM_SEND_STATE_CHANGED.ClientContext = nullptr;
+            }
         }
         break;
     }

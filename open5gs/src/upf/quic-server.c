@@ -305,9 +305,9 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void *Context, QUIC_CONNECTI
         ogs_info("[quic] Terminated by peer.\n");
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
-        ctx->MsQuic->ConnectionClose(Conn);
+        ctx->active_client_connection = NULL; // Prevent other threads from using it
+        ctx->MsQuic->ConnectionClose(Conn);   // Now safely destroy it
         ogs_info("[quic] Connection Closed.\n");
-        ctx->active_client_connection = NULL;
         break;
     case QUIC_CONNECTION_EVENT_LOCAL_ADDRESS_CHANGED:
         ogs_info("[quic] Local address Changed.\n");
@@ -343,16 +343,18 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void *Context, QUIC_CONNECTI
     case QUIC_CONNECTION_EVENT_DATAGRAM_SEND_STATE_CHANGED:
     {
         int state = Event->DATAGRAM_SEND_STATE_CHANGED.State;
-
-        if (state == QUIC_DATAGRAM_SEND_SENT ||
+        if (state == QUIC_DATAGRAM_SEND_ACKNOWLEDGED ||
+            state == QUIC_DATAGRAM_SEND_ACKNOWLEDGED_SPURIOUS ||
             state == QUIC_DATAGRAM_SEND_CANCELED ||
             state == QUIC_DATAGRAM_SEND_LOST_DISCARDED)
         {
             if (Event->DATAGRAM_SEND_STATE_CHANGED.ClientContext)
             {
                 free(Event->DATAGRAM_SEND_STATE_CHANGED.ClientContext);
+                Event->DATAGRAM_SEND_STATE_CHANGED.ClientContext = NULL;
             }
         }
+
         break;
     }
     case QUIC_CONNECTION_EVENT_RESUMED:
