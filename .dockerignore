@@ -1,0 +1,23 @@
+# Host build artefacts - these must never be copied into images.
+# Without this, any change to a build artefact invalidates the COPY layer
+# and forces a full rebuild even when source is unchanged.
+build/
+UERANSIM/build/
+UERANSIM/cmake-build-release/
+UERANSIM/cmake-build-debug/
+open5gs/buildDir/
+
+# Version control
+.git/
+
+# Python measurement scripts - not needed in images
+measurements/
+
+# IDE / editor artefacts
+.vscode/
+*.swp
+*.swo
+*.orig
+
+# Docs
+docs/

@@ -3,12 +3,23 @@ ARG tag=latest
 ARG username
 FROM ${username}/${dist}-${tag}-base
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gstreamer1.0-tools \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-libav \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /ueransim
 
 COPY UERANSIM .
 
-RUN rm -rf build cmake-build-release cmake-build-debug
-RUN cmake -S . -B build -G Ninja && \
+
+RUN --mount=type=cache,target=/root/.ccache,sharing=locked \
+    cmake -S . -B build -G Ninja \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache && \
     cmake --build build
 
 ENV PATH="/ueransim/build:${PATH}"
