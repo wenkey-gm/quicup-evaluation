@@ -12,6 +12,7 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM.
 - [x] implementation of QUIC with msquic
 - [x] Transport mode flag for gnb and upf 
 - [x] Integrate siemens/edge_shark to monitor traffic
+- [x] Stream music with gstreamer
 
 
 ## Prerequisites
@@ -81,10 +82,10 @@ docker compose down
 sudo sysctl -w net.ipv4.ip_forward=1
 ```
 
-2. Add UE subnet 10.45.0.0/16 to masquerade in host. So, the traffic from ueransim-UE uses wlan0/eth0 address 
+2. Add UE subnet 10.45.0.0/16 to masquerade in host. So, the traffic from ueransim-UE uses wlan0/eth0 address. CHeck this thoroughly.
 
 ```bash
-sudo iptables -t nat -I POSTROUTING -s 10.45.0.0/16 -o wlan0 -j MASQUERADE
+sudo iptables -t nat -I POSTROUTING -s 10.45.0.0/16 -o {YOUR_NETWORK_INTERFACE(eth0/wlan)} -j MASQUERADE
 ```
 
 - optional(Internet access in container):
@@ -107,6 +108,26 @@ sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 
 ```bash
 sudo ip route add 10.45.0.0/16 via 10.10.0.10 dev br-open5gs
+```
+
+## Music streamer over QUIC
+
+#### Setup: create route with ue with 10.10.0.1 to bypass network inteface(Run this in container)
+
+```bash
+ip route add 10.10.0.1/32 dev uesimtun0
+```
+
+1. Run this in ue container
+
+```bash
+gst-launch-1.0 filesrc location=music.mp3 ! decodebin !   audioconvert ! audioresample !   audio/x-raw,rate=48000,channels=2 !   opusenc ! rtpopuspay !   udpsink host=10.10.0.1 port=5004
+```
+
+2. Run this in host container
+
+```bash
+gst-launch-1.0 udpsrc port=5004 caps="application/x-rtp,media=audio,encoding-name=OPUS,payload=96,clock-rate=48000" ! rtpopusdepay ! opusdec ! audioconvert ! audioresample ! autoaudiosink
 ```
 
 ## References
