@@ -115,7 +115,7 @@ sudo ip route add 10.45.0.0/16 via 10.10.0.10 dev br-open5gs
 #### Setup: create route with ue with 10.10.0.1 to bypass network inteface(Run this in container)
 
 ```bash
-ip route add 10.10.0.1/32 dev uesimtun0
+docker exec -it ueransim-ue ip route add 10.10.0.1/32 dev uesimtun0
 ```
 
 1. Run this in ue container

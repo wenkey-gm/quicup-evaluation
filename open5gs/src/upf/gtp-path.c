@@ -76,10 +76,7 @@ bool upf_n3_route_downlink(uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
 
 void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
 {
-
-    ogs_info("QUIC Uplink: Processing packet for TEID 0x%x", teid);
-
-    // 1. Ask Open5GS to find the UE's rules using the TEID we unpacked
+    ogs_debug("QUIC Uplink: Processing packet for TEID 0x%x", teid);
     ogs_pfcp_object_t *pfcp_object = ogs_pfcp_object_find_by_teid(teid);
 
     if (!pfcp_object)
@@ -98,20 +95,20 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
     {
         pfcp_sess = (ogs_pfcp_sess_t *)pfcp_object;
 
-        // Loop through the session's rules to find the one for our TEID
         ogs_list_for_each(&pfcp_sess->pdr_list, pdr)
         {
-                if (teid != pdr->f_teid.teid) {
-                                continue;
-                            }
-                if (ogs_list_first(&pdr->rule_list) &&
-                                ogs_pfcp_pdr_rule_find_by_packet(pdr, pkbuf) == NULL) {
-                                continue; // TEID matches, but rule doesn't. Keep looking!
-                        }
+            if (teid != pdr->f_teid.teid)
+            {
+                continue;
+            }
+            if (ogs_list_first(&pdr->rule_list) &&
+                ogs_pfcp_pdr_rule_find_by_packet(pdr, pkbuf) == NULL)
+            {
+                continue;
+            }
 
             break;
         }
-             // Found the PERFECT rule!
     }
 
     if (!pdr)
@@ -124,14 +121,7 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
     far = pdr->far;
     ogs_assert(far);
 
-    /*
-     * Normal N3→N6 uplink: the FAR destination is CORE (internet / ogstun).
-     * far->gnode is NULL for the N6 direction, so calling ogs_pfcp_up_handle_pdr()
-     * would cause the packet to be buffered and never forwarded.
-     * Instead, mirror what _gtpv1_u_recv_cb does: write the raw IP packet
-     * directly to the ogstun TUN file descriptor.
-     */
-     ogs_info("QUIC Uplink: Found PDR. FAR dst_if is %d", far->dst_if);
+    ogs_debug("QUIC Uplink: Found PDR. FAR dst_if is %d", far->dst_if);
     if (far->dst_if == OGS_PFCP_INTERFACE_CORE)
     {
         upf_sess_t *sess = UPF_SESS(pdr->sess);
@@ -160,26 +150,21 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
         for (i = 0; i < pdr->num_of_urr; i++)
             upf_sess_urr_acc_add(sess, pdr->urr[i], pkbuf->len, true);
 
-        ogs_info("QUIC Uplink: Writing packet to TUN interface %s", dev->ifname);
+        ogs_debug("QUIC Uplink: Writing packet to TUN interface %s", dev->ifname);
 
         if (ogs_tun_write(dev->fd, pkbuf) != OGS_OK)
             ogs_warn("QUIC Uplink: ogs_tun_write() failed");
         else
-            ogs_info("QUIC Uplink: SUCCESS! Packet injected to Linux kernel.");
+            ogs_debug("QUIC Uplink: SUCCESS! Packet injected to Linux kernel.");
 
         ogs_pkbuf_free(pkbuf);
         return;
     }
 
-    /*
-     * Fallback for other directions (indirect tunnel, home-routed roaming, etc.)
-     * ogs_pfcp_up_handle_pdr() takes ownership of pkbuf.
-     */
-    ogs_info("QUIC Uplink: FAR dst_if is NOT CORE. Using fallback handle_pdr.");
+    ogs_debug("QUIC Uplink: FAR dst_if is NOT CORE. Using fallback handle_pdr.");
 
     ogs_pfcp_user_plane_report_t report;
     memset(&report, 0, sizeof(report));
-
 
     if (!ogs_pfcp_up_handle_pdr(pdr, OGS_GTPU_MSGTYPE_GPDU, 0, NULL, pkbuf, &report))
         ogs_error("QUIC Uplink: ogs_pfcp_up_handle_pdr() failed");
