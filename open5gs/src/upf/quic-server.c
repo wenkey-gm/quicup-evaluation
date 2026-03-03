@@ -70,15 +70,11 @@ QUIC_STATUS StartQuicServer(ogs_quic_context_t *ServerCtx, const char *alpn, con
     QUIC_BUFFER AlpnBuffer = {(uint32_t)strlen(alpn), (uint8_t *)alpn};
     QUIC_SETTINGS Settings = {0};
 
-    Settings.PeerBidiStreamCount = 100;
-    Settings.PeerUnidiStreamCount = 100;
     Settings.DatagramReceiveEnabled = 1;
     Settings.IdleTimeoutMs = 0;
     Settings.KeepAliveIntervalMs = 25000; // Ping every 25 seconds
 
     // Note: In C, we use '1' instead of 'true' for bitfields
-    Settings.IsSet.PeerBidiStreamCount = 1;
-    Settings.IsSet.PeerUnidiStreamCount = 1;
     Settings.IsSet.DatagramReceiveEnabled = 1;
     Settings.IsSet.IdleTimeoutMs = 1;
     Settings.IsSet.KeepAliveIntervalMs = 1;
