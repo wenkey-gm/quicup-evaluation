@@ -10,6 +10,7 @@ home/
 .idea/
 .cache/
 config/secrets/
+measurements/*.json
 
 # OS
 .DS_Store

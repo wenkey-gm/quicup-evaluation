@@ -12,7 +12,7 @@ import pandas as pd
 # Configuration Constants
 UE_CONTAINER = "ueransim-ue"
 SERVER_CONTAINER = "open5gs-run"
-SERVER_IP = "10.10.0.10"
+SERVER_IP = "10.45.0.1"
 EXTERNAL_SERVER_IP = "8.8.8.8"
 BIND_IP = "10.45.0.2"
 DURATION = 10
@@ -128,7 +128,7 @@ def run_iperf3_test(container_name, server_ip, bind_ip, duration=DURATION):
     print(f"\nRunning iperf3 test (duration: {duration}s)...")
     print(f"   Target: {server_ip}, Bind: {bind_ip}")
 
-    iperf_cmd = f"docker exec {container_name} {NR_BINDER_PATH} {bind_ip} iperf3 -c {server_ip} -t {duration} -J"
+    iperf_cmd = f"docker exec {container_name} iperf3 -c {server_ip} -B {bind_ip} -t {duration} -J"
     timeout = duration + 60
     stdout, stderr, returncode = run_command(iperf_cmd, timeout=timeout)
 

@@ -18,7 +18,7 @@ def extract_rtt_from_iperf(filename, protocol_name):
                     # iperf3 outputs RTT in microseconds. We convert it to milliseconds.
                     if "rtt" in stream:
                         rtt_us = stream["rtt"]  # already in microseconds
-                        rtt_values.append(rtt_us)
+                        rtt_values.append(rtt_us / 1000.0)
 
     except FileNotFoundError:
         print(
@@ -34,7 +34,7 @@ def extract_rtt_from_iperf(filename, protocol_name):
         return pd.DataFrame()
 
     return pd.DataFrame(
-        {"Protocol": protocol_name, "Latency under Load (µs)": rtt_values}
+        {"Protocol": protocol_name, "Latency under Load (ms)": rtt_values}
     )
 
 
@@ -57,7 +57,7 @@ if not df_all.empty:
     }
     ax = sns.boxplot(
         x="Protocol",
-        y="Latency under Load (µs)",
+        y="Latency under Load (ms)",
         hue="Protocol",
         data=df_all,
         width=0.4,
@@ -69,7 +69,7 @@ if not df_all.empty:
     # Add a swarmplot to show the actual distribution of data points
     sns.swarmplot(
         x="Protocol",
-        y="Latency under Load (µs)",
+        y="Latency under Load (ms)",
         hue="Protocol",
         data=df_all,
         color=".25",
@@ -81,21 +81,21 @@ if not df_all.empty:
     # 5. Add titles and labels
     plt.title("Network Latency Under Heavy Load (iperf3 RTT)", fontsize=16, pad=20)
     plt.xlabel("5G User Plane Protocol", fontsize=14)
-    plt.ylabel("RTT Latency (Microseconds)", fontsize=14)
+    plt.ylabel("RTT Latency (Milliseconds)", fontsize=14)
 
     # 6. Annotate stats beside each box
-    col = "Latency under Load (µs)"
+    col = "Latency under Load (ms)"
     protocols = list(palette.keys())
     for x_pos, label in enumerate(protocols):
         subset = df_all.loc[df_all["Protocol"] == label, col]
         if subset.empty:
             continue
         stats_text = (
-            f"mean   = {np.mean(subset):.1f} µs\n"
-            f"median = {np.median(subset):.1f} µs\n"
-            f"min    = {np.min(subset):.1f} µs\n"
-            f"max    = {np.max(subset):.1f} µs\n"
-            f"σ      = {np.std(subset):.1f} µs"
+            f"mean   = {np.mean(subset):.2f} ms\n"
+            f"median = {np.median(subset):.2f} ms\n"
+            f"min    = {np.min(subset):.2f} ms\n"
+            f"max    = {np.max(subset):.2f} ms\n"
+            f"σ      = {np.std(subset):.2f} ms"
         )
         # Place text to the right of each box
         ax.text(
