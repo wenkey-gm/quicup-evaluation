@@ -187,7 +187,7 @@ services:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
       - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
-    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml -l debug"
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-ue:
     depends_on:
@@ -217,7 +217,7 @@ services:
       - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "
       sleep 15 &&
-      build/nr-ue -c /ueransim/config/open5gs-ue.yaml -l debug &
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
       ip route del default via 10.10.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
