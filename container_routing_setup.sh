@@ -12,3 +12,6 @@ sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 
 # 4. Routing to UPF
 sudo ip route add 10.45.0.0/16 via 10.10.0.10 dev br-open5gs
+
+# 5. Replace Routing if already exists
+sudo ip route replace 10.45.0.0/16 via 10.10.0.10 dev br-open5gs

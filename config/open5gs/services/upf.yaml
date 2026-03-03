@@ -15,6 +15,14 @@ upf:
     client:
   #      smf:     #  UPF PFCP Client try to associate SMF PFCP Server
   #        - address: 127.0.0.4
+
+  transport_mode: quic
+  quic:
+    address: 10.10.0.10
+    port: 4567
+    cert: /secrets/server.crt
+    key: /secrets/server.key
+
   gtpu:
     server:
       - address: 10.10.0.10

@@ -8,6 +8,8 @@ home/
 # IDE
 .vscode/
 .idea/
+.cache/
+config/secrets/
 
 # OS
 .DS_Store

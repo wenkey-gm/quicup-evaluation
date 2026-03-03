@@ -1,12 +1,33 @@
 ARG dist=ubuntu
 ARG tag=latest
-FROM ${dist}:${tag}
 
-MAINTAINER Sukchan Lee <acetcom@gmail.com>
+FROM ${dist}:${tag} AS builder
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+RUN git clone --depth 1 --recursive --shallow-submodules https://github.com/microsoft/msquic.git
+
+WORKDIR /workspace/msquic
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    -DQUIC_BUILD_TEST=OFF \
+    -DQUIC_BUILD_TOOLS=OFF \
+    -DQUIC_BUILD_PERF=OFF \
+    && cmake --build build --config Release \
+    && cmake --install build --prefix /msquic-install
+
+
+FROM ${dist}:${tag} AS runtime
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    DEBIAN_FRONTEND=noninteractive \
     apt-get install -y --no-install-recommends \
     python3-pip \
     python3-setuptools \
@@ -18,7 +39,7 @@ RUN apt-get update && \
     git \
     cmake \
     meson \
-    iperf3\
+    iperf3 \
     tcpdump \
     libsctp-dev \
     libgnutls28-dev \
@@ -32,6 +53,10 @@ RUN apt-get update && \
     libnghttp2-dev \
     libtins-dev \
     libtalloc-dev \
+    liblttng-ust-dev \
+    lttng-tools \
+    libnuma-dev \
+    ccache \
     iproute2 \
     make \
     g++ \
@@ -48,3 +73,11 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends libidn11-dev; \
     fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+
+COPY --from=builder /msquic-install/lib /usr/local/lib
+COPY --from=builder /msquic-install/include /usr/local/include
+
+RUN ldconfig
+
+CMD ["/bin/bash"]
