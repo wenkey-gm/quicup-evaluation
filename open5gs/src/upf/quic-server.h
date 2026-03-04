@@ -19,12 +19,8 @@ typedef struct ogs_quic_context_s
     HQUIC Listener;
     HQUIC Connection;
     HQUIC active_client_connection;
+    QUIC_STATUS status;
 } ogs_quic_context_t;
-
-typedef struct quic_send_context_s{
-    QUIC_BUFFER buffer;
-    uint8_t data_space[2048];
-} quic_send_context_t;
 
 
 ogs_quic_context_t *ogs_quic_self(void);
