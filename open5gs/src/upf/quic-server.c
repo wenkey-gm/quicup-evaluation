@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <msquic.h>
 #include "gtp-path.h"
+#include "metrics.h"
 
 
 typedef struct ogs_quic_send_ctx_s {
@@ -141,7 +142,7 @@ void StopQuicServer(ogs_quic_context_t *ServerCtx)
         }
         if (ServerCtx->active_client_connection != NULL)
         {
-            ctx->MsQuic->ConnectionShutdown(ServerCtx->Connection, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
+            ctx->MsQuic->ConnectionShutdown(ServerCtx->active_client_connection, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
         }
         if (ServerCtx->Configuration != NULL)
         {
@@ -213,6 +214,7 @@ void quic_server_send_downlink(uint32_t teid, uint8_t *packet_data, uint16_t pac
         ogs_pool_free(&quic_send_pool, send_buffer);
         ogs_thread_mutex_unlock(&quic_pool_mutex);
     }
+    upf_metrics_inst_global_add(UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF, 1);
 }
 
 void quic_server_handle_uplink(const QUIC_BUFFER *buffer)
@@ -272,8 +274,8 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void* Context, QUIC_CONNECTI
         ogs_debug("Terminated by peer.\n");
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
-        if (ctx->active_client_connection!=NULL) {
-            ctx->MsQuic->ConnectionClose(ctx->active_client_connection);
+            ctx->MsQuic->ConnectionClose(Conn);
+        if (ctx->active_client_connection==Conn) {
             ctx->active_client_connection = NULL;
         }
         ogs_debug("Connection Closed.\n");
@@ -307,6 +309,7 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void* Context, QUIC_CONNECTI
         const QUIC_BUFFER *Buffer = Event->DATAGRAM_RECEIVED.Buffer;
         ogs_debug("MsQuic Server: DATAGRAM RECEIVED! Length: %d", Event->DATAGRAM_RECEIVED.Buffer->Length);
         quic_server_handle_uplink(Buffer);
+        upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_QUIC_INDATAPKTN3UPF);
         break;
     }
     case QUIC_CONNECTION_EVENT_DATAGRAM_SEND_STATE_CHANGED:

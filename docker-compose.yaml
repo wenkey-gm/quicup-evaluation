@@ -181,10 +181,6 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.4
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - "/dev/net/tun:/dev/net/tun"
     volumes:
       - ./config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -208,11 +204,6 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.16
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    devices:
-      - "/dev/net/tun:/dev/net/tun"
     volumes:
       - ./config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "
@@ -223,6 +214,28 @@ services:
       ip route add default dev uesimtun0;
       wait
       "
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./config/metrics/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.29
+    ports:
+      - "9091:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.30
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=metrics
+    depends_on:
+      - prometheus
 
 volumes:
   mongodb: {}

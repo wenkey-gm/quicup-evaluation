@@ -87,6 +87,16 @@ upf_metrics_spec_def_t upf_metrics_spec_def_global[_UPF_METR_GLOB_MAX] = {
     .name = "pfcp_peers_active",
     .description = "Active PFCP peers",
 },
+[UPF_METR_GLOB_CTR_QUIC_INDATAPKTN3UPF] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "fivegs_ep_n3_quic_indatapktn3upf",
+    .description = "Number of incoming QUIC data packets on the N3 interface",
+},
+[UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF] = {
+    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+    .name = "fivegs_ep_n3_quic_outdatapktn3upf",
+    .description = "Number of outgoing QUIC data packets on the N3 interface",
+},
 };
 int upf_metrics_init_inst_global(void)
 {
