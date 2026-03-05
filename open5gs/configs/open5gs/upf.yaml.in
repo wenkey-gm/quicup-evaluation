@@ -19,7 +19,6 @@ upf:
   transport_mode: quic
   quic:
     address: 127.0.0.8
-    port: 4567
     cert: /secrets/server.crt
     key: /secrets/server.key
 

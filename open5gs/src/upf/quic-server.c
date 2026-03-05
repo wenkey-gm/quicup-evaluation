@@ -26,7 +26,7 @@ ogs_quic_context_t *ogs_quic_self(void)
 QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Connection, void *Context, QUIC_CONNECTION_EVENT *Event);
 QUIC_STATUS QUIC_API ListnerCallback(HQUIC Listener, void *Context, QUIC_LISTENER_EVENT *Event);
 
-int ogs_quic_server_start(const char *bind_address, uint16_t port)
+int ogs_quic_server_start(const char *bind_address)
 {
     ogs_pool_init(&quic_send_pool, 4096);
     ogs_thread_mutex_init(&quic_pool_mutex);
@@ -36,7 +36,7 @@ int ogs_quic_server_start(const char *bind_address, uint16_t port)
     const char *alpn = "n3-quic";
     const char *app_name = "n3-quic";
 
-    if (QUIC_FAILED(ctx->status = StartQuicServer(ctx, alpn, app_name, bind_address, port)))
+    if (QUIC_FAILED(ctx->status = StartQuicServer(ctx, alpn, app_name, bind_address)))
     {
         ogs_error("Failed to start QUIC server! Status: 0x%x\n", ctx->status);
         return OGS_ERROR;
@@ -50,7 +50,7 @@ void ogs_quic_server_stop(void)
     StopQuicServer(ogs_quic_self());
 }
 
-QUIC_STATUS StartQuicServer(ogs_quic_context_t *ServerCtx, const char *alpn, const char *app_name, const char *bind_address, uint16_t port)
+QUIC_STATUS StartQuicServer(ogs_quic_context_t *ServerCtx, const char *alpn, const char *app_name, const char *bind_address)
 {
     ogs_quic_context_t *ctx = ogs_quic_self();
 
@@ -113,7 +113,7 @@ QUIC_STATUS StartQuicServer(ogs_quic_context_t *ServerCtx, const char *alpn, con
     QUIC_ADDR Address={0};
     struct sockaddr_in *AddrV4 = (struct sockaddr_in *)&Address;
     AddrV4->sin_family = AF_INET;
-    AddrV4->sin_port = htons(port);
+    AddrV4->sin_port = htons(OGS_GTPV1_U_QUIC_PORT);
 
     if (inet_pton(AF_INET, bind_address, &AddrV4->sin_addr) != 1)
     {

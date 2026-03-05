@@ -191,21 +191,12 @@ int upf_context_parse_config(void)
                         }else if (!strcmp(q_key, "key"))
                         {
                             upf_self()->quic_key_path = ogs_strdup(q_value);
-                        }else if (!strcmp(q_key, "address")) {
+                        }
+                        else if (!strcmp(q_key, "address")) {
                             if (q_value) {
                                 upf_self()->ogs_quic_config.address = ogs_strdup(q_value);
-                            }
-                        }else if (!strcmp(q_key, "port"))
-                        {
-                            char *endptr;
-                            // Base 10 conversion
-                            long parsed_port = strtol(q_value, &endptr, 10);
-
-                            // Safety Check: Did it parse entirely? Is it a valid port range (1-65535)?
-                            if (*endptr == '\0' && parsed_port > 0 && parsed_port <= 65535) {
-                                upf_self()->ogs_quic_config.port = (uint16_t)parsed_port;
-                            }
                         }
+                    }
                     }
                 }
                 else
