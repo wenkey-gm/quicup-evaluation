@@ -13,6 +13,7 @@
 
 #define OGS_GTPV1_U_QUIC_PORT           4567
 
+
 typedef struct ogs_quic_context_s
 {
     const QUIC_API_TABLE* MsQuic;
@@ -31,5 +32,5 @@ int ogs_quic_server_start(const char *bind_address);
 void ogs_quic_server_stop(void);
 QUIC_STATUS StartQuicServer(ogs_quic_context_t* ServerCtx, const char* alpn, const char* app_name, const char* bind_address);
 void StopQuicServer(ogs_quic_context_t* ServerCtx);
-void quic_server_send_downlink(uint32_t teid, uint8_t *packet_data, uint16_t packet_len);
+void quic_server_send_downlink(const char *dest_gnb_ip,uint32_t teid, uint8_t *packet_data, uint16_t packet_len);
 void quic_server_handle_uplink(const QUIC_BUFFER* buffer);

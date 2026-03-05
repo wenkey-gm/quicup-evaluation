@@ -14,6 +14,17 @@ typedef struct ogs_quic_send_ctx_s {
     uint8_t payload[2048];
 } ogs_quic_send_ctx_t;
 
+typedef struct quic_client_node_s {
+    ogs_lnode_t lnode;               // Open5GS linked-list node
+    HQUIC conn;                      // The MsQuic Connection Handle
+    char ip_address[INET6_ADDRSTRLEN]; // The gNB's IP address
+} quic_client_node_t;
+
+
+ogs_list_t quic_client_list;
+ogs_thread_mutex_t quic_client_mutex;
+OGS_POOL(quic_client_pool, quic_client_node_t);
+
 ogs_thread_mutex_t quic_pool_mutex;
 OGS_POOL(quic_send_pool, ogs_quic_send_ctx_t);
 
@@ -29,6 +40,12 @@ QUIC_STATUS QUIC_API ListnerCallback(HQUIC Listener, void *Context, QUIC_LISTENE
 
 int ogs_quic_server_start(const char *bind_address)
 {
+
+    ogs_list_init(&quic_client_list);
+    ogs_thread_mutex_init(&quic_client_mutex);
+    ogs_pool_init(&quic_client_pool, 128);
+
+
     ogs_pool_init(&quic_send_pool, 4096);
     ogs_thread_mutex_init(&quic_pool_mutex);
 
@@ -140,10 +157,12 @@ void StopQuicServer(ogs_quic_context_t *ServerCtx)
         {
             ctx->MsQuic->ListenerStop(ServerCtx->Listener);
         }
-        if (ServerCtx->active_client_connection != NULL)
-        {
-            ctx->MsQuic->ConnectionShutdown(ServerCtx->active_client_connection, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
+        ogs_thread_mutex_lock(&quic_client_mutex);
+        quic_client_node_t *node = NULL;
+        ogs_list_for_each(&quic_client_list, node) {
+            ctx->MsQuic->ConnectionShutdown(node->conn, QUIC_CONNECTION_SHUTDOWN_FLAG_NONE, 0);
         }
+        ogs_thread_mutex_unlock(&quic_client_mutex);
         if (ServerCtx->Configuration != NULL)
         {
             ctx->MsQuic->ConfigurationClose(ServerCtx->Configuration);
@@ -159,28 +178,48 @@ void StopQuicServer(ogs_quic_context_t *ServerCtx)
         ctx->MsQuic = NULL;
 
         ogs_pool_final(&quic_send_pool);
-
         ogs_thread_mutex_destroy(&quic_pool_mutex);
+
+        ogs_pool_final(&quic_client_pool);
+        ogs_thread_mutex_destroy(&quic_client_mutex);
 
         ogs_debug("Server resources cleanly destroyed.\n");
     }
 }
 
-void quic_server_send_downlink(uint32_t teid, uint8_t *packet_data, uint16_t packet_len)
+void quic_server_send_downlink(const char *dest_gnb_ip,uint32_t teid, uint8_t *packet_data, uint16_t packet_len)
 {
     ogs_quic_context_t *ctx = ogs_quic_self();
 
-    if (!ctx || !ctx->MsQuic || !ctx->active_client_connection)
+    HQUIC target_connection = NULL;
+
+    ogs_thread_mutex_lock(&quic_client_mutex);
+    quic_client_node_t *node = NULL;
+    ogs_list_for_each(&quic_client_list, node) {
+        if (strcmp(node->ip_address, dest_gnb_ip) == 0) {
+            target_connection = node->conn;
+            break;
+        }
+    }
+    ogs_thread_mutex_unlock(&quic_client_mutex);
+
+    if (target_connection == NULL) {
+        ogs_warn("QUIC Downlink dropped: gNB %s is not connected.", dest_gnb_ip);
+        return;
+    }
+
+    if (!ctx || !ctx->MsQuic)
     {
         ogs_warn("QUIC Downlink dropped: No active client connected.");
         return;
     }
 
-    if (!packet_data || packet_len == 0 || packet_len > 2048)
+    if (!packet_data || packet_len == 0)
     {
         ogs_warn("QUIC Downlink dropped: Invalid packet data.");
         return;
     }
+
 
     const uint16_t header_len = sizeof(uint32_t);
     const uint16_t total_len = header_len + packet_len;
@@ -203,7 +242,7 @@ void quic_server_send_downlink(uint32_t teid, uint8_t *packet_data, uint16_t pac
     send_buffer->quic_buffer.Buffer = send_buffer->payload;
 
     if (QUIC_FAILED(ctx->status = ctx->MsQuic->DatagramSend(
-        ctx->active_client_connection,
+        target_connection,
         &send_buffer->quic_buffer,
         1,
         QUIC_SEND_FLAG_NONE,
@@ -251,19 +290,42 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void* Context, QUIC_CONNECTI
     switch (Event->Type)
     {
     case QUIC_CONNECTION_EVENT_CONNECTED:
-        if (Event->CONNECTED.SessionResumed)
         {
-            ogs_debug("Connection established! (RESUMED 0-RTT/1-RTT)\n");
-        }
-        else
-        {
-            if QUIC_FAILED(ctx->status = ctx->MsQuic->ConnectionSendResumptionTicket(Conn, QUIC_SEND_RESUMPTION_FLAG_NONE, 0, NULL))
+            QUIC_ADDR remote_addr = {0};
+            uint32_t addr_len = sizeof(remote_addr);
+            ctx->MsQuic->GetParam(Conn, QUIC_PARAM_CONN_REMOTE_ADDRESS, &addr_len, &remote_addr);
+
+            char ip_str[INET6_ADDRSTRLEN] = {0};
+            if (remote_addr.Ipv4.sin_family == AF_INET) {
+                inet_ntop(AF_INET, &remote_addr.Ipv4.sin_addr, ip_str, sizeof(ip_str));
+            } else {
+                inet_ntop(AF_INET6, &remote_addr.Ipv6.sin6_addr, ip_str, sizeof(ip_str));
+            }
+
+            ogs_info("gNB connected from IP: %s", ip_str);
+
+            quic_client_node_t *node;
+            ogs_pool_alloc(&quic_client_pool, &node);
+            node->conn = Conn;
+            strcpy(node->ip_address, ip_str);
+
+            ogs_thread_mutex_lock(&quic_client_mutex);
+            ogs_list_add(&quic_client_list, node);
+            ogs_thread_mutex_unlock(&quic_client_mutex);
+
+            if (Event->CONNECTED.SessionResumed)
             {
-                ogs_error("Sending Resumption ticket failed! 0x%x", ctx->status);
-                return ctx->status;
+                ogs_debug("Connection established! (RESUMED 0-RTT/1-RTT)\n");
+            }
+            else
+            {
+                if QUIC_FAILED(ctx->status = ctx->MsQuic->ConnectionSendResumptionTicket(Conn, QUIC_SEND_RESUMPTION_FLAG_NONE, 0, NULL))
+                {
+                    ogs_error("Sending Resumption ticket failed! 0x%x", ctx->status);
+                    return ctx->status;
+                }
             }
         }
-        ctx->active_client_connection = Conn;
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_TRANSPORT:
         ogs_error("Connection shutdown by transport. Error Code: 0x%llx (%" PRIu64 ")\n",
@@ -274,11 +336,23 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void* Context, QUIC_CONNECTI
         ogs_debug("Terminated by peer.\n");
         break;
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
+        {
+            ogs_thread_mutex_lock(&quic_client_mutex);
+
+            quic_client_node_t *node = NULL;
+
+            ogs_list_for_each(&quic_client_list, node) {
+                if (node->conn == Conn) {
+                    ogs_info("Removing gNB %s from active list.", node->ip_address);
+                    ogs_list_remove(&quic_client_list, node);
+                    ogs_pool_free(&quic_client_pool, node);
+                    break;
+                }
+            }
+            ogs_thread_mutex_unlock(&quic_client_mutex);
             ctx->MsQuic->ConnectionClose(Conn);
-        if (ctx->active_client_connection==Conn) {
-            ctx->active_client_connection = NULL;
+            ogs_debug("Connection Closed.\n");
         }
-        ogs_debug("Connection Closed.\n");
         break;
     case QUIC_CONNECTION_EVENT_LOCAL_ADDRESS_CHANGED:
         ogs_debug("Local address Changed.\n");

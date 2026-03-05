@@ -62,11 +62,26 @@ static ogs_pkbuf_pool_t *packet_pool = NULL;
 
 static void upf_gtp_handle_multicast(ogs_pkbuf_t *recvbuf);
 
-bool upf_n3_route_downlink(uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
+bool upf_n3_route_downlink(ogs_pfcp_far_t *far,uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
 {
     if (upf_self()->transport_mode == UPF_TRANSPORT_MODE_QUIC)
     {
-        quic_server_send_downlink(teid, ogs_pkbuf->data, ogs_pkbuf->len);
+        ogs_ip_t ip;
+        char gnb_ip_str[INET6_ADDRSTRLEN] = {0};
+
+        ogs_pfcp_outer_header_creation_to_ip(&far->outer_header_creation, &ip);
+
+        if (ip.ipv4) {
+            inet_ntop(AF_INET, &ip.addr, gnb_ip_str, INET_ADDRSTRLEN);
+        } else if (ip.ipv6) {
+            inet_ntop(AF_INET6, &ip.addr6, gnb_ip_str, INET6_ADDRSTRLEN);
+        } else {
+            ogs_error("QUIC Downlink: No valid IP address in FAR");
+            ogs_pkbuf_free(ogs_pkbuf);
+            return true;
+        }
+
+        quic_server_send_downlink(gnb_ip_str, teid, ogs_pkbuf->data, ogs_pkbuf->len);
 
         ogs_pkbuf_free(ogs_pkbuf);
         return true;
@@ -328,7 +343,7 @@ static void _gtpv1_tun_recv_common_cb(
 
     uint32_t teid = far->outer_header_creation.teid;
 
-    if (upf_n3_route_downlink(teid, recvbuf))
+    if (upf_n3_route_downlink(far, teid, recvbuf))
     {
         return;
     }
