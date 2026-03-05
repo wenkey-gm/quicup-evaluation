@@ -319,7 +319,6 @@ struct GnbConfig
     std::string linkIp{};
     std::string ngapIp{};
     std::string gtpIp{};
-    std::string quicIp{};
     TransportMode transportMode{};
     std::optional<std::string> gtpAdvertiseIp{};
     bool ignoreStreamIds{};

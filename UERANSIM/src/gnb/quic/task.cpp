@@ -1,4 +1,7 @@
 #include "task.hpp"
+#include "gnb/nts.hpp"
+#include "utils/network.hpp"
+#include "utils/octet_string.hpp"
 #include <cstddef>
 #include <msquic.h>
 
@@ -58,13 +61,12 @@ public:
 
 struct SendContext{
     QUIC_BUFFER quicBuffer{};
-    uint8_t payload[2048]{};
+    OctetString payload{};
 
-    SendContext(const uint8_t* data, size_t length)
+    SendContext(NmGnbGtpToQuic* data) : payload(std::move(data->data))
     {
-        std::memcpy(payload, data, length);
-        quicBuffer.Length = static_cast<uint32_t>(length);
-        quicBuffer.Buffer = payload;
+        quicBuffer.Length = static_cast<uint32_t>(payload.length());
+        quicBuffer.Buffer = const_cast<uint8_t*>(payload.data());
     }
 
     void* operator new(size_t size) {
@@ -116,7 +118,7 @@ void QuicTask::onStart()
         return;
     }
 
-    QUIC_SETTINGS settings = {};
+    QUIC_SETTINGS settings{};
     settings.IdleTimeoutMs = 0;
     settings.KeepAliveIntervalMs = 25000;
     settings.DatagramReceiveEnabled = true;
@@ -133,7 +135,7 @@ void QuicTask::onStart()
         return;
     }
 
-    QUIC_CREDENTIAL_CONFIG credConfig = {};
+    QUIC_CREDENTIAL_CONFIG credConfig{};
     credConfig.Type = QUIC_CREDENTIAL_TYPE_NONE;
     credConfig.Flags = QUIC_CREDENTIAL_FLAG_CLIENT | QUIC_CREDENTIAL_FLAG_NO_CERTIFICATE_VALIDATION;
 
@@ -142,11 +144,9 @@ void QuicTask::onStart()
         m_logger->err("Configuration LoadCredential failed  0x%x\n", status);
         return;
     }
-
-    connect();
 }
 
-void QuicTask::connect(){
+void QuicTask::connect(const InetAddress &to){
     if (QUIC_FAILED(status = m_msQuicApi->ConnectionOpen(m_registration, connectionCallback, this, &m_connection)))
     {
         m_logger->err("ConnectionOpen failed, 0x%x\n", status);
@@ -162,7 +162,7 @@ void QuicTask::connect(){
     }
 
     if (QUIC_FAILED(status = m_msQuicApi->ConnectionStart(m_connection, m_configuration, QUIC_ADDRESS_FAMILY_INET,
-                                                 m_base->config->quicIp.c_str(), cons::QuicPort)))
+                                                 to.toString().c_str(), to.getPort())))
     {
         m_logger->err("ConnectionStart failed, 0x%x\n", status);
         return;
@@ -178,8 +178,7 @@ void QuicTask::onLoop()
     switch (msg->msgType)
     {
     case NtsMessageType::GNB_GTP_TO_QUIC: {
-        auto &w = dynamic_cast<NmGnbGtpToQuic &>(*msg);
-        send(w.data.data(), w.data.length());
+        send(&dynamic_cast<NmGnbGtpToQuic &>(*msg));
         break;
     }
     default:
@@ -209,20 +208,16 @@ void QuicTask::onQuit()
     }
 }
 
-void QuicTask::send(const uint8_t *data, size_t length)
+void QuicTask::send(NmGnbGtpToQuic* w)
 {
-    if (!m_connection)
+    if (!m_isConnection)
     {
-        m_logger->warn("QUIC uplink dropped: not connected yet");
+        m_isConnection = true;
+        connect(w->ip);
         return;
     }
 
-    if (length > 2048) {
-            m_logger->err("QUIC uplink dropped: Packet too large (%zu bytes)", length);
-            return;
-    }
-
-    auto* ctx = new SendContext(data, length);
+    auto* ctx = new SendContext(w);
 
     if (QUIC_FAILED(status=m_msQuicApi->DatagramSend(m_connection, &ctx->quicBuffer, 1, QUIC_SEND_FLAG_NONE, ctx)))
     {
@@ -240,38 +235,31 @@ QUIC_STATUS QUIC_API QuicTask::connectionCallback(HQUIC conn, void *context, QUI
     {
     case QUIC_CONNECTION_EVENT_CONNECTED:
         if (event->CONNECTED.SessionResumed)
-            ctx->m_logger->info("QUIC connection resumed (0-RTT)");
+            ctx->m_logger->debug("QUIC connection resumed (0-RTT)");
         else
-            ctx->m_logger->info("new QUIC connection established");
+            ctx->m_logger->debug("new QUIC connection established");
         break;
 
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_TRANSPORT:
-        ctx->m_logger->info("QUIC shutdown by transport, status: 0x%x", event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
+        ctx->m_logger->debug("QUIC shutdown by transport, status: 0x%x", event->SHUTDOWN_INITIATED_BY_TRANSPORT.Status);
         break;
 
     case QUIC_CONNECTION_EVENT_SHUTDOWN_INITIATED_BY_PEER:
-        ctx->m_logger->info("QUIC shutdown by peer");
+        ctx->m_logger->debug("QUIC shutdown by peer");
         break;
 
     case QUIC_CONNECTION_EVENT_SHUTDOWN_COMPLETE:
-        ctx->m_logger->info("QUIC shutdown complete");
+        ctx->m_logger->debug("QUIC shutdown complete");
         if (ctx->m_connection)
         {
             ctx->m_msQuicApi->ConnectionClose(ctx->m_connection);
             ctx->m_connection = nullptr;
         }
-
-        if (!ctx->m_isQuitting){
-            std::thread([ctx]() {
-                std::this_thread::sleep_for(std::chrono::seconds(2));
-                ctx->m_logger->info("QUIC attempting reconnect...");
-                ctx->connect();
-            }).detach();
-        }
+        ctx->m_isConnection = false;
         break;
 
     case QUIC_CONNECTION_EVENT_DATAGRAM_STATE_CHANGED:
-        ctx->m_logger->info("QUIC datagram state changed, max send length: %u",
+        ctx->m_logger->debug("QUIC datagram state changed, max send length: %u",
                              event->DATAGRAM_STATE_CHANGED.MaxSendLength);
         break;
 
@@ -292,7 +280,6 @@ QUIC_STATUS QUIC_API QuicTask::connectionCallback(HQUIC conn, void *context, QUI
             if (sentBuffer != nullptr)
             {
                 delete sentBuffer;
-                event->DATAGRAM_SEND_STATE_CHANGED.ClientContext = nullptr;
             }
         }
         break;

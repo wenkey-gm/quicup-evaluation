@@ -10,6 +10,7 @@
 
 #include "types.hpp"
 
+#include <cstdint>
 #include <utility>
 
 #include <lib/app/cli_base.hpp>
@@ -73,6 +74,7 @@ struct NmGnbRlsToGtp : NtsMessage
 struct NmGnbGtpToQuic : NtsMessage
 {
     OctetString data; // [4-byte TEID (big-endian)][raw IP packet]
+    InetAddress ip;
 
     explicit NmGnbGtpToQuic() : NtsMessage(NtsMessageType::GNB_GTP_TO_QUIC)
     {

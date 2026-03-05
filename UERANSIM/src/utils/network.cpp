@@ -112,6 +112,24 @@ uint16_t InetAddress::getPort() const
     return 0;
 }
 
+std::string InetAddress::toString() const
+{
+    char ipString[INET6_ADDRSTRLEN];
+    if (storage.ss_family == AF_INET)
+    {
+        auto *sock4 = reinterpret_cast<const sockaddr_in *>(&storage);
+        inet_ntop(AF_INET, &(sock4->sin_addr), ipString, INET_ADDRSTRLEN);
+        return std::string(ipString);
+    }
+    else if (storage.ss_family == AF_INET6)
+    {
+        auto *sock6 = reinterpret_cast<const sockaddr_in6 *>(&storage);
+        inet_ntop(AF_INET6, &(sock6->sin6_addr), ipString, INET6_ADDRSTRLEN);
+        return std::string(ipString);
+    }
+    return "Unknown IP";
+}
+
 Socket::Socket(int domain, int type, int protocol)
 {
     int sd = socket(domain, type, protocol);
