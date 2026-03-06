@@ -50,53 +50,58 @@ static int upf_metrics_init_spec(ogs_metrics_context_t *ctx,
 ogs_metrics_spec_t *upf_metrics_spec_global[_UPF_METR_GLOB_MAX];
 ogs_metrics_inst_t *upf_metrics_inst_global[_UPF_METR_GLOB_MAX];
 upf_metrics_spec_def_t upf_metrics_spec_def_global[_UPF_METR_GLOB_MAX] = {
-/* Global Counters: */
-[UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_ep_n3_gtp_indatapktn3upf",
-    .description = "Number of incoming GTP data packets on the N3 interface",
-},
-[UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_ep_n3_gtp_outdatapktn3upf",
-    .description = "Number of outgoing GTP data packets on the N3 interface",
-},
-[UPF_METR_GLOB_CTR_SM_N4SESSIONESTABREQ] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_upffunction_sm_n4sessionestabreq",
-    .description = "Number of requested N4 session establishments",
-},
-[UPF_METR_GLOB_CTR_SM_N4SESSIONREPORT] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_upffunction_sm_n4sessionreport",
-    .description = "Number of requested N4 session reports",
-},
-[UPF_METR_GLOB_CTR_SM_N4SESSIONREPORTSUCC] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_upffunction_sm_n4sessionreportsucc",
-    .description = "Number of successful N4 session reports",
-},
-/* Global Gauges: */
-[UPF_METR_GLOB_GAUGE_UPF_SESSIONNBR] = {
-    .type = OGS_METRICS_METRIC_TYPE_GAUGE,
-    .name = "fivegs_upffunction_upf_sessionnbr",
-    .description = "Active Sessions",
-},
-[UPF_METR_GLOB_GAUGE_PFCP_PEERS_ACTIVE] = {
-    .type = OGS_METRICS_METRIC_TYPE_GAUGE,
-    .name = "pfcp_peers_active",
-    .description = "Active PFCP peers",
-},
-[UPF_METR_GLOB_CTR_QUIC_INDATAPKTN3UPF] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_ep_n3_quic_indatapktn3upf",
-    .description = "Number of incoming QUIC data packets on the N3 interface",
-},
-[UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF] = {
-    .type = OGS_METRICS_METRIC_TYPE_COUNTER,
-    .name = "fivegs_ep_n3_quic_outdatapktn3upf",
-    .description = "Number of outgoing QUIC data packets on the N3 interface",
-},
+    /* Global Counters: */
+    [UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_ep_n3_gtp_indatapktn3upf",
+        .description = "Number of incoming GTP data packets on the N3 interface",
+    },
+    [UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_ep_n3_gtp_outdatapktn3upf",
+        .description = "Number of outgoing GTP data packets on the N3 interface",
+    },
+    [UPF_METR_GLOB_CTR_SM_N4SESSIONESTABREQ] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_upffunction_sm_n4sessionestabreq",
+        .description = "Number of requested N4 session establishments",
+    },
+    [UPF_METR_GLOB_CTR_SM_N4SESSIONREPORT] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_upffunction_sm_n4sessionreport",
+        .description = "Number of requested N4 session reports",
+    },
+    [UPF_METR_GLOB_CTR_SM_N4SESSIONREPORTSUCC] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_upffunction_sm_n4sessionreportsucc",
+        .description = "Number of successful N4 session reports",
+    },
+    /* Global Gauges: */
+    [UPF_METR_GLOB_GAUGE_UPF_SESSIONNBR] = {
+        .type = OGS_METRICS_METRIC_TYPE_GAUGE,
+        .name = "fivegs_upffunction_upf_sessionnbr",
+        .description = "Active Sessions",
+    },
+    [UPF_METR_GLOB_GAUGE_PFCP_PEERS_ACTIVE] = {
+        .type = OGS_METRICS_METRIC_TYPE_GAUGE,
+        .name = "pfcp_peers_active",
+        .description = "Active PFCP peers",
+    },
+    [UPF_METR_GLOB_CTR_QUIC_INDATAPKTN3UPF] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_ep_n3_quic_indatapktn3upf",
+        .description = "Number of incoming QUIC data packets on the N3 interface",
+    },
+    [UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_ep_n3_quic_outdatapktn3upf",
+        .description = "Number of outgoing QUIC data packets on the N3 interface",
+    },
+    [UPF_METR_GLOB_CTR_QUIC_OUTDATAVOLUMEN3UPF] = {
+        .type = OGS_METRICS_METRIC_TYPE_COUNTER,
+        .name = "fivegs_ep_n3_quic_outdatavolumen3upf",
+        .description = "Data volume of outgoing QUIC data packets on the N3 interface",
+    },
 };
 int upf_metrics_init_inst_global(void)
 {

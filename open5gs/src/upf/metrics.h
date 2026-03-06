@@ -8,7 +8,8 @@ extern "C" {
 #endif
 
 /* GLOBAL */
-typedef enum upf_metric_type_global_s {
+typedef enum upf_metric_type_global_s
+{
     UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF = 0,
     UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF,
     UPF_METR_GLOB_CTR_SM_N4SESSIONESTABREQ,
@@ -20,7 +21,9 @@ typedef enum upf_metric_type_global_s {
     UPF_METR_GLOB_CTR_QUIC_INDATAPKTN3UPF,
     UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF,
 
-    _UPF_METR_GLOB_MAX,
+    UPF_METR_GLOB_CTR_QUIC_OUTDATAVOLUMEN3UPF,
+
+        _UPF_METR_GLOB_MAX,
 } upf_metric_type_global_t;
 extern ogs_metrics_inst_t *upf_metrics_inst_global[_UPF_METR_GLOB_MAX];
 
