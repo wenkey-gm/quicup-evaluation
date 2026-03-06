@@ -1,0 +1,110 @@
+services:
+  ueransim-gnb-quic:
+    depends_on:
+      run:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    privileged: true
+    container_name: ueransim-gnb-quic
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.4
+    volumes:
+      - ../config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+
+  ueransim-gnb-gtpu:
+    depends_on:
+      run:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    privileged: true
+    container_name: ueransim-gnb-gtpu
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.5
+    volumes:
+      - ../config/ueransim/open5gs-gnb-gtpu.yaml:/ueransim/config/open5gs-gnb.yaml:Z
+    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+
+  ueransim-ue-quic:
+    depends_on:
+      ueransim-gnb-quic:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    container_name: ueransim-ue-quic
+    privileged: true
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.16
+    volumes:
+      - ../config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
+    command: /bin/bash -c "
+      sleep 15 &&
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+      until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route add default dev uesimtun0;
+      wait
+      "
+
+  ueransim-ue-gtpu:
+    depends_on:
+      ueransim-gnb-gtpu:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    container_name: ueransim-ue-gtpu
+    privileged: true
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.17
+    volumes:
+      - ../config/ueransim/open5gs-ue-gtpu.yaml:/ueransim/config/open5gs-ue.yaml:Z
+    command: /bin/bash -c "
+      sleep 15 &&
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+      until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route add default dev uesimtun0;
+      wait
+      "
+
+networks:
+  shared_network:
+    external: true

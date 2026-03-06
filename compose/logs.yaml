@@ -1,0 +1,74 @@
+services:
+  gostwire:
+    image: "ghcr.io/siemens/ghostwire"
+    pull_policy: if_not_present
+    restart: "unless-stopped"
+    read_only: true
+    entrypoint:
+      - "/gostwire"
+      - "--http=[::]:5000"
+      - "--brand=Edgeshark"
+    user: "65534"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CAP_SYS_ADMIN
+      - CAP_SYS_CHROOT
+      - CAP_SYS_PTRACE
+      - CAP_DAC_READ_SEARCH
+      - CAP_DAC_OVERRIDE
+      - CAP_NET_RAW
+      - CAP_NET_ADMIN
+    pid: "host"
+    cgroup: host
+    networks:
+      99-ghost-in-da-edge:
+        priority: 100
+
+  edgeshark:
+    image: "ghcr.io/siemens/packetflix"
+    pull_policy: "if_not_present"
+    read_only: true
+    restart: "unless-stopped"
+    entrypoint:
+      - "/packetflix"
+      - "--port=5001"
+      - "--discovery-service=gostwire.ghost-in-da-edge"
+      - "--gw-port=5000"
+      - "--proxy-discovery"
+      - "--debug"
+    ports:
+      - "127.0.0.1:5001:5001"
+    user: "65534"
+    cap_drop:
+      - ALL
+    cap_add:
+      - CAP_SYS_ADMIN
+      - CAP_SYS_CHROOT
+      - CAP_SYS_PTRACE
+      - CAP_NET_ADMIN
+      - CAP_NET_RAW
+    pid: "host"
+    networks:
+      99-ghost-in-da-edge:
+        priority: 100
+
+  debug-logs:
+    container_name: debug-logs
+    image: amir20/dozzle:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro,Z
+    environment:
+      - DOZZLE_LEVEL=info
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.9
+    restart: unless-stopped
+
+networks:
+  shared_network:
+    external: true
+  99-ghost-in-da-edge:
+    external: true
