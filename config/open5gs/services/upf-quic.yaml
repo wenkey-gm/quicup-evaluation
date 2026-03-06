@@ -24,11 +24,12 @@ upf:
 
   gtpu:
     server:
-      - address: 127.0.0.1
+      - address: 10.10.0.12
 
   session:
     - subnet: 10.46.0.0/16
       gateway: 10.46.0.1
+      dnn: quic-net
     - subnet: 2001:db8:cafe::/48
       gateway: 2001:db8:cafe::1
   metrics:

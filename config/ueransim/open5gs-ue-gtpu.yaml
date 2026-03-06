@@ -1,5 +1,5 @@
 # IMSI number of the UE. IMSI = [MCC|MNC|MSISDN] (In total 15 digits)
-supi: "imsi-999700000000001"
+supi: "imsi-999700000000002"
 # Mobile Country Code value of HPLMN
 mcc: "999"
 # Mobile Network Code value of HPLMN (2 or 3 digits)
@@ -22,16 +22,16 @@ opType: "OPC"
 # Authentication Management Field (AMF) value
 amf: "8000"
 # IMEI number of the device. It is used if no SUPI is provided
-imei: "356938035643803"
+imei: "356938035643804"
 # IMEISV number of the device. It is used if no SUPI and IMEI is provided
-imeiSv: "4370816125816151"
+imeiSv: "4370816125816152"
 
 # Network mask used for the UE's TUN interface to define the subnet size
 tunNetmask: "255.255.255.0"
 
 # List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
-  - 10.10.0.4
+  - 10.10.0.5
 
 # UAC Access Identities Configuration
 uacAic:
@@ -50,7 +50,7 @@ uacAcc:
 # Initial PDU sessions to be established
 sessions:
   - type: "IPv4"
-    apn: "quic-net"
+    apn: "internet"
     slice:
       sst: 1
 

@@ -26,5 +26,4 @@ services:
     restart: unless-stopped
 
 networks:
-  shared_network:
-    external: true
+  shared_network: {}

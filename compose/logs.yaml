@@ -68,7 +68,5 @@ services:
     restart: unless-stopped
 
 networks:
-  shared_network:
-    external: true
-  99-ghost-in-da-edge:
-    external: true
+  shared_network: {}
+  99-ghost-in-da-edge: {}
