@@ -110,7 +110,7 @@ void QuicTask::onStart()
 
     QUIC_BUFFER alpnBuffer = {static_cast<uint32_t>(strlen(alpn)),
                               reinterpret_cast<uint8_t *>(const_cast<char *>(alpn))};
-    QUIC_REGISTRATION_CONFIG regConfig = {appName, QUIC_EXECUTION_PROFILE_TYPE_MAX_THROUGHPUT};
+    QUIC_REGISTRATION_CONFIG regConfig = {appName, QUIC_EXECUTION_PROFILE_LOW_LATENCY};
 
     if (QUIC_FAILED(status=m_msQuicApi->RegistrationOpen(&regConfig, &m_registration)))
     {

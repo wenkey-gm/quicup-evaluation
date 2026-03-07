@@ -77,7 +77,7 @@ QUIC_STATUS StartQuicServer(ogs_quic_context_t *ServerCtx, const char *alpn, con
         return ctx->status;
     }
 
-    QUIC_REGISTRATION_CONFIG RegConfig = {app_name, QUIC_EXECUTION_PROFILE_TYPE_MAX_THROUGHPUT};
+    QUIC_REGISTRATION_CONFIG RegConfig = {app_name, QUIC_EXECUTION_PROFILE_LOW_LATENCY};
     if (QUIC_FAILED(ctx->status = ctx->MsQuic->RegistrationOpen(&RegConfig, &ServerCtx->Registration)))
     {
         ogs_error("Registration open failed: 0x%x\n", ctx->status);
