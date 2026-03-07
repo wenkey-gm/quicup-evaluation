@@ -111,6 +111,7 @@ services:
     command: >
       /bin/bash -c "
       /root/setup.sh &&
+      iperf3 -s -B 10.45.0.1 -D &&
       open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
       "
 
@@ -140,6 +141,7 @@ services:
       ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
+      iperf3 -s -B 10.46.0.1 -D &&
       open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml
       "
 
