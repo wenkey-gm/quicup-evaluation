@@ -70,8 +70,7 @@ int upf_initialize(void)
 
     if (upf_self()->transport_mode == UPF_TRANSPORT_MODE_QUIC) {
         int rc = ogs_quic_server_start(
-            upf_self()->ogs_quic_config.address,
-            upf_self()->ogs_quic_config.port
+            upf_self()->ogs_quic_config.address
         );
         if (rc != OGS_OK) return OGS_ERROR;
     }

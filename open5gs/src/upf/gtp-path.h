@@ -33,7 +33,7 @@ void upf_gtp_final(void);
 int upf_gtp_open(void);
 void upf_gtp_close(void);
 
-bool upf_n3_route_downlink(uint32_t teid, ogs_pkbuf_t *ogs_pkbuf);
+bool upf_n3_route_downlink(ogs_pfcp_far_t* far,uint32_t teid, ogs_pkbuf_t *ogs_pkbuf);
 
 void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf);
 

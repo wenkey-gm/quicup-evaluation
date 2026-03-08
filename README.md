@@ -17,9 +17,15 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM.
 
 ## Prerequisites
 
-- Docker & Linux(better SCTP and tun device support)
+- Linux host (for SCTP + TUN device support)
+- Docker Engine + Docker Compose v2
+- `iptables` and `iproute2` on the host
 
-1. Create openssl certificates and place in 'config/secrets'
+---
+
+## Fresh Install — Step by Step
+
+### 1. Clone with submodules
 
 ```bash
 openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes -subj "/CN=localhost"
@@ -88,7 +94,7 @@ sudo sysctl -w net.ipv4.ip_forward=1
 sudo iptables -t nat -I POSTROUTING -s 10.45.0.0/16 -o {YOUR_NETWORK_INTERFACE(eth0/wlan)} -j MASQUERADE
 ```
 
-- optional(Internet access in container):
+### Metrics (`-m`)
 
 ```bash
   sudo iptables -t nat -A POSTROUTING -s 10.10.0.0/16 ! -o br-open5gs -j MASQUERADE
@@ -107,32 +113,16 @@ sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 
 
 ```bash
-sudo ip route add 10.45.0.0/16 via 10.10.0.10 dev br-open5gs
+docker compose down            # stop and remove containers
+docker compose down -v         # also remove volumes (wipes MongoDB)
 ```
 
-## Music streamer over QUIC
-
-#### Setup: create route with ue with 10.10.0.1 to bypass network inteface(Run this in container)
-
-```bash
-docker exec -it ueransim-ue ip route add 10.10.0.1/32 dev uesimtun0
-```
-
-1. Run this in ue container
-
-```bash
-gst-launch-1.0 filesrc location=music.mp3 ! decodebin !   audioconvert ! audioresample !   audio/x-raw,rate=48000,channels=2 !   opusenc ! rtpopuspay !   udpsink host=10.10.0.1 port=5004
-```
-
-2. Run this in host container
-
-```bash
-gst-launch-1.0 udpsrc port=5004 caps="application/x-rtp,media=audio,encoding-name=OPUS,payload=96,clock-rate=48000" ! rtpopusdepay ! opusdec ! audioconvert ! audioresample ! autoaudiosink
-```
+---
 
 ## References
 
 - [MSQUIC GitHub](https://github.com/microsoft/msquic)
 - [QUIC RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)
-- [3GPP TS 29.281 - GTP-U Protocol](https://www.3gpp.org/DynaReport/29281.htm)
+- [3GPP TS 29.281 — GTP-U Protocol](https://www.3gpp.org/DynaReport/29281.htm)
 - [Open5GS Documentation](https://open5gs.org/open5gs/docs/)
+- [StrongSwan — IPsec for Linux](https://www.strongswan.org/)

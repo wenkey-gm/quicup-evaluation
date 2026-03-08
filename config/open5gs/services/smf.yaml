@@ -5,7 +5,7 @@ logger:
 
 global:
   max:
-    ue: 1024  # The number of UE can be increased depending on memory size.
+    ue: 1024 # The number of UE can be increased depending on memory size.
 #    peer: 64
 
 smf:
@@ -14,16 +14,21 @@ smf:
       - address: 127.0.0.4
         port: 7777
     client:
-#      nrf:
-#        - uri: http://127.0.0.10:7777
+      #      nrf:
+      #        - uri: http://127.0.0.10:7777
       scp:
         - uri: http://127.0.0.200:7777
   pfcp:
     server:
-      - address: 127.0.0.4
+      - address: 10.10.0.10
     client:
       upf:
-        - address: 127.0.0.7
+        - address: 10.10.0.11
+          dnn: internet
+        - address: 10.10.0.12
+          dnn: quic-net
+        - address: 10.10.0.13
+          dnn: ipsec-net
   gtpc:
     server:
       - address: 127.0.0.4
@@ -37,6 +42,13 @@ smf:
   session:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
+      dnn: internet
+    - subnet: 10.46.0.0/16
+      gateway: 10.46.0.1
+      dnn: quic-net
+    - subnet: 10.47.0.0/16
+      gateway: 10.47.0.1
+      dnn: ipsec-net
     - subnet: 2001:db8:cafe::/48
       gateway: 2001:db8:cafe::1
   dns:
@@ -45,11 +57,11 @@ smf:
     - 2001:4860:4860::8888
     - 2001:4860:4860::8844
   mtu: 1400
-#  p-cscf:
-#    - 127.0.0.1
-#    - ::1
-#  ctf:
-#    enabled: auto   # auto(default)|yes|no
+  #  p-cscf:
+  #    - 127.0.0.1
+  #    - ::1
+  #  ctf:
+  #    enabled: auto   # auto(default)|yes|no
   freeDiameter: /usr/local/etc/freeDiameter/smf.conf
 
 ################################################################################

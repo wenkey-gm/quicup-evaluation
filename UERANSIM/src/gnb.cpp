@@ -6,6 +6,7 @@
 // See README, LICENSE, and CONTRIBUTING files for licensing details.
 //
 
+#include "gnb/types.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <unordered_map>
@@ -51,7 +52,6 @@ static nr::gnb::GnbConfig *ReadConfigYaml()
     result->linkIp = yaml::GetIpAddress(config, "linkIp");
     result->ngapIp = yaml::GetIpAddress(config, "ngapIp");
     result->gtpIp = yaml::GetIpAddress(config, "gtpIp");
-    result->quicIp = yaml::GetIpAddress(config, "quicIp");
     result->transportMode = yaml::GetString(config, "transportMode") == "quic" ? nr::gnb::QUIC : nr::gnb::GTPU;
 
     if (yaml::HasField(config, "gtpAdvertiseIp"))

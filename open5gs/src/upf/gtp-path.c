@@ -62,11 +62,31 @@ static ogs_pkbuf_pool_t *packet_pool = NULL;
 
 static void upf_gtp_handle_multicast(ogs_pkbuf_t *recvbuf);
 
-bool upf_n3_route_downlink(uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
+bool upf_n3_route_downlink(ogs_pfcp_far_t *far, uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
 {
     if (upf_self()->transport_mode == UPF_TRANSPORT_MODE_QUIC)
     {
-        quic_server_send_downlink(teid, ogs_pkbuf->data, ogs_pkbuf->len);
+        ogs_ip_t ip;
+        char gnb_ip_str[INET6_ADDRSTRLEN] = {0};
+
+        ogs_pfcp_outer_header_creation_to_ip(&far->outer_header_creation, &ip);
+
+        if (ip.ipv4)
+        {
+            inet_ntop(AF_INET, &ip.addr, gnb_ip_str, INET_ADDRSTRLEN);
+        }
+        else if (ip.ipv6)
+        {
+            inet_ntop(AF_INET6, &ip.addr6, gnb_ip_str, INET6_ADDRSTRLEN);
+        }
+        else
+        {
+            ogs_error("QUIC Downlink: No valid IP address in FAR");
+            ogs_pkbuf_free(ogs_pkbuf);
+            return true;
+        }
+
+        quic_server_send_downlink(gnb_ip_str, teid, ogs_pkbuf->data, ogs_pkbuf->len);
 
         ogs_pkbuf_free(ogs_pkbuf);
         return true;
@@ -76,9 +96,7 @@ bool upf_n3_route_downlink(uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
 
 void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
 {
-    ogs_debug("QUIC Uplink: Processing packet for TEID 0x%x", teid);
     ogs_pfcp_object_t *pfcp_object = ogs_pfcp_object_find_by_teid(teid);
-
     if (!pfcp_object)
     {
         ogs_error("QUIC Uplink: No PFCP object found for TEID 0x%x. Dropping!", teid);
@@ -89,12 +107,10 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
     ogs_pfcp_pdr_t *pdr = NULL;
     ogs_pfcp_far_t *far = NULL;
     ogs_pfcp_sess_t *pfcp_sess = NULL;
-    int i;
 
     if (pfcp_object->type == OGS_PFCP_OBJ_SESS_TYPE)
     {
         pfcp_sess = (ogs_pfcp_sess_t *)pfcp_object;
-
         ogs_list_for_each(&pfcp_sess->pdr_list, pdr)
         {
             if (teid != pdr->f_teid.teid)
@@ -121,7 +137,6 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
     far = pdr->far;
     ogs_assert(far);
 
-    ogs_debug("QUIC Uplink: Found PDR. FAR dst_if is %d", far->dst_if);
     if (far->dst_if == OGS_PFCP_INTERFACE_CORE)
     {
         upf_sess_t *sess = UPF_SESS(pdr->sess);
@@ -146,25 +161,16 @@ void upf_n3_route_uplink(uint32_t teid, ogs_pkbuf_t *pkbuf)
         ogs_pfcp_dev_t *dev = subnet->dev;
         ogs_assert(dev);
 
-        /* URR accounting (uplink) */
-        for (i = 0; i < pdr->num_of_urr; i++)
+        for (int i = 0; i < pdr->num_of_urr; i++)
             upf_sess_urr_acc_add(sess, pdr->urr[i], pkbuf->len, true);
-
-        ogs_debug("QUIC Uplink: Writing packet to TUN interface %s", dev->ifname);
 
         if (ogs_tun_write(dev->fd, pkbuf) != OGS_OK)
             ogs_warn("QUIC Uplink: ogs_tun_write() failed");
-        else
-            ogs_debug("QUIC Uplink: SUCCESS! Packet injected to Linux kernel.");
-
         ogs_pkbuf_free(pkbuf);
         return;
     }
 
-    ogs_debug("QUIC Uplink: FAR dst_if is NOT CORE. Using fallback handle_pdr.");
-
-    ogs_pfcp_user_plane_report_t report;
-    memset(&report, 0, sizeof(report));
+    ogs_pfcp_user_plane_report_t report = {0};
 
     if (!ogs_pfcp_up_handle_pdr(pdr, OGS_GTPU_MSGTYPE_GPDU, 0, NULL, pkbuf, &report))
         ogs_error("QUIC Uplink: ogs_pfcp_up_handle_pdr() failed");
@@ -342,7 +348,7 @@ static void _gtpv1_tun_recv_common_cb(
 
     uint32_t teid = far->outer_header_creation.teid;
 
-    if (upf_n3_route_downlink(teid, recvbuf))
+    if (upf_n3_route_downlink(far, teid, recvbuf))
     {
         return;
     }
@@ -547,7 +553,7 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
 #if 0
         upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF);
         upf_metrics_inst_by_qfi_add(header_desc.qos_flow_identifier,
-                UPF_METR_CTR_GTP_INDATAVOLUMEQOSLEVELN3UPF, pkbuf->len);
+                                    UPF_METR_CTR_GTP_INDATAVOLUMEQOSLEVELN3UPF, pkbuf->len);
 #endif
 
         pfcp_object = ogs_pfcp_object_find_by_teid(header_desc.teid);

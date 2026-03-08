@@ -19,7 +19,6 @@ upf:
   transport_mode: quic
   quic:
     address: 10.10.0.10
-    port: 4567
     cert: /secrets/server.crt
     key: /secrets/server.key
 
@@ -34,7 +33,7 @@ upf:
       gateway: 2001:db8:cafe::1
   metrics:
     server:
-      - address: 127.0.0.7
+      - address: 10.10.0.10
         port: 9090
 
 ################################################################################

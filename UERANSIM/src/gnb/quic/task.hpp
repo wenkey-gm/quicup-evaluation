@@ -8,13 +8,15 @@
 
 #pragma once
 
+#include "utils/network.hpp"
 #include <gnb/types.hpp>
 
 #include <memory>
 #include <msquic.h>
 #include <utils/logger.hpp>
-#include <utils/nts.hpp>
-#include <vector>
+#include <gnb/gtp/task.hpp>
+#include <gnb/nts.hpp>
+#include <utils/constants.hpp>
 
 namespace nr::gnb
 {
@@ -23,13 +25,17 @@ class QuicTask : public NtsTask
 {
   private:
     TaskBase *m_base;
+    QUIC_STATUS status{};
+    bool m_isQuitting = false;
     std::unique_ptr<Logger> m_logger;
 
     const QUIC_API_TABLE *m_msQuicApi{};
     HQUIC m_registration{};
     HQUIC m_configuration{};
     HQUIC m_connection{};
-    std::vector<uint8_t> m_savedResumptionTicket{};
+    uint8_t m_savedResumptionTicket[4096]{};
+    uint32_t m_savedResumptionTicketLength{0};
+    bool m_isConnection{false};
 
     friend class GnbCmdHandler;
 
@@ -43,8 +49,8 @@ class QuicTask : public NtsTask
     void onQuit() override;
 
   private:
-    void connect();
-    void send(const uint8_t *data, size_t length);
+    void connect(const InetAddress &to);
+    void send(NmGnbGtpToQuic* w);
     static QUIC_STATUS QUIC_API connectionCallback(HQUIC conn, void *context, QUIC_CONNECTION_EVENT *event);
 };
 

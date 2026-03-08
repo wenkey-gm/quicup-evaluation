@@ -55,7 +55,6 @@ typedef enum {
 
 typedef struct ogs_quic_config_s {
     char *address;
-    uint16_t port;
 } ogs_quic_config_t;
 
 typedef struct upf_context_s {

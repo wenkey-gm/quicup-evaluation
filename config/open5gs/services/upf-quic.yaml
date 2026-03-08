@@ -1,38 +1,40 @@
 logger:
   file:
-    path: ./upf.log
+    path: /var/local/log/open5gs/upf.log
 #  level: info   # fatal|error|warn|info(default)|debug|trace
 
 global:
   max:
-    ue: 1024  # The number of UE can be increased depending on memory size.
+    ue: 1024 # The number of UE can be increased depending on memory size.
 #    peer: 64
 
 upf:
   pfcp:
     server:
-      - address: 127.0.0.7
+      - address: 10.10.0.12
     client:
-#      smf:     #  UPF PFCP Client try to associate SMF PFCP Server
-#        - address: 127.0.0.4
+  #      smf:     #  UPF PFCP Client try to associate SMF PFCP Server
+  #        - address: 127.0.0.4
 
   transport_mode: quic
   quic:
-    address: 127.0.0.8
+    address: 10.10.0.12
     cert: /secrets/server.crt
     key: /secrets/server.key
 
   gtpu:
     server:
-      - address: 127.0.0.7
+      - address: 10.10.0.12
+
   session:
-    - subnet: 10.45.0.0/16
-      gateway: 10.45.0.1
+    - subnet: 10.46.0.0/16
+      gateway: 10.46.0.1
+      dnn: quic-net
     - subnet: 2001:db8:cafe::/48
       gateway: 2001:db8:cafe::1
   metrics:
     server:
-      - address: 127.0.0.7
+      - address: 10.10.0.12
         port: 9090
 
 ################################################################################

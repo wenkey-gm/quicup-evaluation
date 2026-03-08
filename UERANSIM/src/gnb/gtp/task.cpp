@@ -8,7 +8,9 @@
 
 #include "task.hpp"
 #include "gnb/quic/task.hpp"
+#include "utils/network.hpp"
 
+#include <algorithm>
 #include <gnb/gtp/proto.hpp>
 #include <gnb/rls/task.hpp>
 #include <utils/constants.hpp>
@@ -210,12 +212,12 @@ void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
     {
         if (m_base->config->transportMode == QUIC)
         {
-            // Wire format over QUIC: [4-byte TEID (big-endian)][raw IP packet]
             OctetString quicPdu;
             quicPdu.appendOctet4(pduSession->upTunnel.teid);
             quicPdu.append(pdu);
 
             auto w = std::make_unique<NmGnbGtpToQuic>();
+            w->ip = InetAddress(pduSession->upTunnel.address, cons::QuicPort);
             w->data = std::move(quicPdu);
             m_base->quicTask->push(std::move(w));
         }
@@ -248,7 +250,6 @@ void GtpTask::handleUplinkData(int ueId, int psi, OctetString &&pdu)
 
 void GtpTask::handleQuicReceive(const NmGnbQuicToGtp &msg)
 {
-    // Wire format over QUIC: [4-byte TEID (big-endian)][raw IP packet]
     if (msg.data.length() < 5)
     {
         m_logger->err("QUIC downlink datagram too short (%d bytes), dropping", msg.data.length());
@@ -262,13 +263,13 @@ void GtpTask::handleQuicReceive(const NmGnbQuicToGtp &msg)
     auto sessionInd = m_sessionTree.findByDownTeid(teid);
     if (sessionInd == 0)
     {
-        m_logger->err("TEID %u not found on GTP-U downlink (via QUIC)", teid);
+        m_logger->err("TEID %u not found on QUIC downlink", teid);
         return;
     }
 
     if (m_rateLimiter->allowDownlinkPacket(sessionInd, payload.length()))
     {
-        auto w = std::make_unique<NmGnbGtpToRls>(NmGnbGtpToRls::DATA_PDU_DELIVERY);
+        auto w = std::make_unique<NmGnbGtpToRls>(NmGnbGtpToRls::DATA_PDU_DELIVERY); // TODO: Rename NmGnbGtpToRls to NmGnbGtpQuicToRls
         w->ueId = GetUeId(sessionInd);
         w->psi = GetPsi(sessionInd);
         w->pdu = std::move(payload);

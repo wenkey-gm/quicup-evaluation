@@ -233,9 +233,7 @@ std::optional<NgapCause> NgapTask::setupPduSessionResource(NgapUeContext *ue, Pd
         return NgapCause::Protocol_semantic_error;
     }
 
-    std::string n3Ip = m_base->config->transportMode == QUIC
-                           ? m_base->config->quicIp
-                           : m_base->config->gtpAdvertiseIp.value_or(m_base->config->gtpIp);
+    std::string n3Ip = m_base->config->gtpAdvertiseIp.value_or(m_base->config->gtpIp);
 
     resource->downTunnel.address = utils::IpToOctetString(n3Ip);
     resource->downTunnel.teid = ++m_downlinkTeidCounter;
