@@ -62,7 +62,7 @@ static ogs_pkbuf_pool_t *packet_pool = NULL;
 
 static void upf_gtp_handle_multicast(ogs_pkbuf_t *recvbuf);
 
-bool upf_n3_route_downlink(ogs_pfcp_far_t *far,uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
+bool upf_n3_route_downlink(ogs_pfcp_far_t *far, uint32_t teid, ogs_pkbuf_t *ogs_pkbuf)
 {
     if (upf_self()->transport_mode == UPF_TRANSPORT_MODE_QUIC)
     {
@@ -71,11 +71,16 @@ bool upf_n3_route_downlink(ogs_pfcp_far_t *far,uint32_t teid, ogs_pkbuf_t *ogs_p
 
         ogs_pfcp_outer_header_creation_to_ip(&far->outer_header_creation, &ip);
 
-        if (ip.ipv4) {
+        if (ip.ipv4)
+        {
             inet_ntop(AF_INET, &ip.addr, gnb_ip_str, INET_ADDRSTRLEN);
-        } else if (ip.ipv6) {
+        }
+        else if (ip.ipv6)
+        {
             inet_ntop(AF_INET6, &ip.addr6, gnb_ip_str, INET6_ADDRSTRLEN);
-        } else {
+        }
+        else
+        {
             ogs_error("QUIC Downlink: No valid IP address in FAR");
             ogs_pkbuf_free(ogs_pkbuf);
             return true;
@@ -358,7 +363,7 @@ static void _gtpv1_tun_recv_common_cb(
      * It should not be used on the UPF/SGW-U data plane
      * until this issue is resolved.
      */
-#if 1
+#if 0
     upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTP_OUTDATAPKTN3UPF);
     upf_metrics_inst_by_qfi_add(pdr->qer->qfi,
         UPF_METR_CTR_GTP_OUTDATAVOLUMEQOSLEVELN3UPF, recvbuf->len);
@@ -545,10 +550,10 @@ static void _gtpv1_u_recv_cb(short when, ogs_socket_t fd, void *data)
          * It should not be used on the UPF/SGW-U data plane
          * until this issue is resolved.
          */
-#if 1
+#if 0
         upf_metrics_inst_global_inc(UPF_METR_GLOB_CTR_GTP_INDATAPKTN3UPF);
         upf_metrics_inst_by_qfi_add(header_desc.qos_flow_identifier,
-                UPF_METR_CTR_GTP_INDATAVOLUMEQOSLEVELN3UPF, pkbuf->len);
+                                    UPF_METR_CTR_GTP_INDATAVOLUMEQOSLEVELN3UPF, pkbuf->len);
 #endif
 
         pfcp_object = ogs_pfcp_object_find_by_teid(header_desc.teid);

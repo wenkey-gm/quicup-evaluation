@@ -1,7 +1,6 @@
 include:
   - path: compose/open5gs.yaml
   - path: compose/ueransim.yaml
-  - path: compose/metrics.yaml
   - path: compose/logs.yaml
 
 networks:

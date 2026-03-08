@@ -255,8 +255,10 @@ void quic_server_send_downlink(const char *dest_gnb_ip, uint32_t teid, uint8_t *
         ogs_pool_free(&quic_send_pool, send_buffer);
         ogs_thread_mutex_unlock(&quic_pool_mutex);
     }
+#if 0
     upf_metrics_inst_global_add(UPF_METR_GLOB_CTR_QUIC_OUTDATAPKTN3UPF, 1);
     upf_metrics_inst_global_add(UPF_METR_GLOB_CTR_QUIC_OUTDATAVOLUMEN3UPF, packet_len);
+#endif
 }
 
 void quic_server_handle_uplink(const QUIC_BUFFER *buffer)
