@@ -67,6 +67,7 @@ RUN apt-get update && \
     netbase \
     iptables \
     strongswan \
+    libstrongswan-standard-plugins \
     libstrongswan-extra-plugins \
     pkg-config && \
     if apt-cache show libidn-dev > /dev/null 2>&1; then \

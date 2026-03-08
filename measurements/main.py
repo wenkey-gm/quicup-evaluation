@@ -401,7 +401,7 @@ def collect_ping_rtt(
     print(f"\n  Pinging {profile.server_ip} via {interface} ({count} packets) ...")
     stdout, _, rc = docker_exec(
         profile.ue_container,
-        f"ping -i {PING_INTERVAL_SEC} -c {count} -I {interface} {profile.server_ip}",
+        f"ping -i {PING_INTERVAL_SEC} -l 972 -c {count} -I {interface} {profile.server_ip}",
         timeout=int(count * (PING_INTERVAL_SEC + 1)) + 30,
     )
     if rc != 0 or not stdout:
