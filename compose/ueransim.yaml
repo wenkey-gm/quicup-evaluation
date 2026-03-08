@@ -105,5 +105,61 @@ services:
       wait
       "
 
+  ueransim-gnb-gtpu-ipsec:
+    depends_on:
+      run:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    privileged: true
+    container_name: ueransim-gnb-gtpu-ipsec
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.6
+    volumes:
+      - ../config/ueransim/open5gs-gnb-gtpu-ipsec.yaml:/ueransim/config/open5gs-gnb.yaml:Z
+      - ../ipsec:/ipsec:Z
+    environment:
+      - IPSEC=true
+    command: /bin/bash -c "sleep 10 && /ipsec/ipsec_setup.sh gnb_ipsec_gtpu.conf && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+
+  ueransim-ue-gtpu-ipsec:
+    depends_on:
+      ueransim-gnb-gtpu-ipsec:
+        condition: service_started
+    pull_policy: never
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.ueransim
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    container_name: ueransim-ue-gtpu-ipsec
+    privileged: true
+    restart: unless-stopped
+    networks:
+      shared_network:
+        ipv4_address: 10.10.0.18
+    volumes:
+      - ../config/ueransim/open5gs-ue-gtpu-ipsec.yaml:/ueransim/config/open5gs-ue.yaml:Z
+    command: /bin/bash -c "
+      sleep 15 &&
+      build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+      until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route add default dev uesimtun0;
+      wait
+      "
+
 networks:
   shared_network: {}

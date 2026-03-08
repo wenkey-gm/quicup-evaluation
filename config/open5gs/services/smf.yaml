@@ -27,6 +27,8 @@ smf:
           dnn: internet
         - address: 10.10.0.12
           dnn: quic-net
+        - address: 10.10.0.13
+          dnn: ipsec-net
   gtpc:
     server:
       - address: 127.0.0.4
@@ -44,6 +46,9 @@ smf:
     - subnet: 10.46.0.0/16
       gateway: 10.46.0.1
       dnn: quic-net
+    - subnet: 10.47.0.0/16
+      gateway: 10.47.0.1
+      dnn: ipsec-net
     - subnet: 2001:db8:cafe::/48
       gateway: 2001:db8:cafe::1
   dns:
