@@ -1,6 +1,5 @@
 ARG dist=ubuntu
 ARG tag=latest
-
 FROM ${dist}:${tag} AS builder
 
 RUN apt-get update && apt-get install -y \

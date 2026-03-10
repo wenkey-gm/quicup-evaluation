@@ -119,6 +119,26 @@ docker compose down -v         # also remove volumes (wipes MongoDB)
 
 ---
 
+
+## Traffic control in docker
+
+1. Limit traffic
+
+```bash
+docker exec -t ueransim-ue-quic tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
+docker exec -t ueransim-ue-gtpu tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
+docker exec -t ueransim-ue-gtpu-ipsec tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
+```
+
+2. Restore defaults
+
+```bash
+docker exec -t ueransim-ue-quic tc qdisc del dev eth0 root
+docker exec -t ueransim-ue-gtpu tc qdisc del dev eth0 root
+docker exec -t ueransim-ue-gtpu-ipsec tc qdisc del dev eth0 root
+```
+
+
 ## References
 
 - [MSQUIC GitHub](https://github.com/microsoft/msquic)

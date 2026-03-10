@@ -39,6 +39,7 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-latest}
+        username: ${USER}
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
     container_name: quicup-project-ubuntu-base
     restart: unless-stopped
@@ -76,7 +77,6 @@ services:
     command: >
       /bin/bash -c "
       /wait &&
-      /root/setup.sh &&
       open5gs-nrfd -D && sleep 2 &&
       open5gs-scpd -D && sleep 2 &&
       open5gs-amfd -D &&
@@ -110,7 +110,12 @@ services:
       - ../config/secrets:/secrets:Z
     command: >
       /bin/bash -c "
-      /root/setup.sh &&
+      ip tuntap add name ogstun mode tun 2>/dev/null || true &&
+      ip addr del 10.45.0.1/16 dev ogstun 2>/dev/null || true &&
+      ip addr add 10.45.0.1/16 dev ogstun &&
+      ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
+      ip addr add 2001:db8:cafe::1/48 dev ogstun &&
+      ip link set ogstun up &&
       iperf3 -s -B 10.45.0.1 -D &&
       open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
       "

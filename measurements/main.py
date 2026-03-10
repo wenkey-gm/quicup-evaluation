@@ -1,29 +1,3 @@
-"""
-5G User-Plane Performance Benchmarks
-=====================================
-Compare throughput, jitter, packet loss and latency across three
-transport strategies on the N3 interface:
-
-  - QUIC      (QUICUP — natively encrypted)
-  - GTP-U     (standard, unencrypted)
-  - GTP-U+IPsec (encrypted via StrongSwan ESP tunnel)
-
-Each profile runs an iperf3 UDP test through the corresponding
-UE → gNB → UPF path, then a ping latency sweep.  Results are
-saved as JSON logs and comparison PNG plots.
-
-Usage
------
-    python main.py                          # all profiles, all metrics
-    python main.py -p quic gtpu             # only QUIC and GTP-U
-    python main.py -p ipsec                 # only GTP-U+IPsec
-    python main.py -m rtt                   # latency only (ping)
-    python main.py -m throughput jitter      # iperf3 metrics only
-    python main.py -p quic -m rtt throughput # combine both flags
-    python main.py --ping-count 50           # 50 ping packets (default: 30)
-    python main.py --iperf-duration 60       # 60s iperf3 test (default: 100)
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -44,11 +18,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
-# ──────────────────────────────────────────────────────────────
-#  Data Models
-# ──────────────────────────────────────────────────────────────
-
 
 @dataclass(frozen=True)
 class Profile:
@@ -92,10 +61,6 @@ class PerformanceMetrics:
             f"({self.lost_packets}/{self.total_packets})"
         )
 
-
-# ──────────────────────────────────────────────────────────────
-#  Configuration
-# ──────────────────────────────────────────────────────────────
 
 PROFILES: dict[str, Profile] = {
     "quic": Profile(
@@ -150,18 +115,12 @@ IPERF_MAX_RETRIES = 3
 IPERF_RETRY_DELAY_SEC = 10
 
 PING_COUNT = 30
-PING_INTERVAL_SEC = 1
+PING_INTERVAL_SEC = 0.2
 
 OUTPUT_DIR = Path("plots")
 COMMAND_TIMEOUT_SEC = 120
 
-# Cooldown between consecutive iperf3 runs to avoid "server busy"
 INTER_PROFILE_PAUSE_SEC = 5
-
-
-# ──────────────────────────────────────────────────────────────
-#  Shell Helpers
-# ──────────────────────────────────────────────────────────────
 
 
 def run_shell(
@@ -194,11 +153,6 @@ def docker_exec(
     return run_shell(f"docker exec {container} {cmd}", **kwargs)
 
 
-# ──────────────────────────────────────────────────────────────
-#  iperf3 — Server Management
-# ──────────────────────────────────────────────────────────────
-
-
 def start_iperf3_server(container: str) -> bool:
     """(Re)start an iperf3 server inside *container*. Returns success flag."""
     print(f"\n  Starting iperf3 server on {container} ...")
@@ -220,11 +174,6 @@ def start_iperf3_server(container: str) -> bool:
 
     print("  Could not confirm iperf3 server is running")
     return False
-
-
-# ──────────────────────────────────────────────────────────────
-#  iperf3 — Client Test
-# ──────────────────────────────────────────────────────────────
 
 
 def run_iperf3_test(
@@ -284,11 +233,6 @@ def run_iperf3_test(
     return None
 
 
-# ──────────────────────────────────────────────────────────────
-#  iperf3 — Result Parsing
-# ──────────────────────────────────────────────────────────────
-
-
 def _server_output(results: dict) -> dict:
     """In reverse mode iperf3 nests the real data under *server_output_json*."""
     return results.get("server_output_json") or results
@@ -334,11 +278,6 @@ def parse_intervals(results: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# ──────────────────────────────────────────────────────────────
-#  Logging
-# ──────────────────────────────────────────────────────────────
-
-
 def save_json_log(results: dict, output_dir: Path) -> Path:
     """Persist the raw iperf3 JSON to *output_dir*."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -347,11 +286,6 @@ def save_json_log(results: dict, output_dir: Path) -> Path:
     path.write_text(json.dumps(results, indent=2))
     print(f"  Saved raw log  : {path}")
     return path
-
-
-# ──────────────────────────────────────────────────────────────
-#  Plotting — Time-Series Comparison
-# ──────────────────────────────────────────────────────────────
 
 
 def plot_metric_comparison(
@@ -389,19 +323,17 @@ def plot_metric_comparison(
     plt.close(fig)
 
 
-# ──────────────────────────────────────────────────────────────
-#  Plotting — Latency Box-Plot
-# ──────────────────────────────────────────────────────────────
-
 
 def collect_ping_rtt(
     profile: Profile, count: int = PING_COUNT, interface: str = "uesimtun0"
 ) -> list[float]:
     """Ping *profile.server_ip* from inside the UE container and return RTTs in ms."""
-    print(f"\n  Pinging {profile.server_ip} via {interface} ({count} packets) ...")
+    print(
+        f"\n  Pinging {profile.server_ip} via {profile.ue_container} ({count} packets) ..."
+    )
     stdout, _, rc = docker_exec(
         profile.ue_container,
-        f"ping -i {PING_INTERVAL_SEC} -l 972 -c {count} -I {interface} {profile.server_ip}",
+        f"ping -i {PING_INTERVAL_SEC} -s 972 -c {count} -I {interface} {profile.server_ip}",
         timeout=int(count * (PING_INTERVAL_SEC + 1)) + 30,
     )
     if rc != 0 or not stdout:
@@ -490,11 +422,6 @@ def plot_latency_comparison(
     plt.close()
 
 
-# ──────────────────────────────────────────────────────────────
-#  Per-Profile Measurement Orchestration
-# ──────────────────────────────────────────────────────────────
-
-
 def measure_profile(
     profile: Profile, duration: int = IPERF_DURATION_SEC
 ) -> tuple[dict, PerformanceMetrics] | None:
@@ -521,11 +448,6 @@ def measure_profile(
 
     metrics.display()
     return raw_results, metrics
-
-
-# ──────────────────────────────────────────────────────────────
-#  CLI & Entry Point
-# ──────────────────────────────────────────────────────────────
 
 SEPARATOR = "=" * 55
 
@@ -586,8 +508,6 @@ def main() -> None:
     needs_iperf = bool(selected_metrics & {"throughput", "jitter"})
     needs_ping = "rtt" in selected_metrics
 
-    # ── Phase 1: iperf3 throughput / jitter tests ─────────────
-
     time_series: dict[str, tuple[pd.DataFrame, str]] = {}
 
     if needs_iperf:
@@ -607,8 +527,6 @@ def main() -> None:
 
             time.sleep(INTER_PROFILE_PAUSE_SEC)
 
-    # ── Phase 2: iperf3 comparison plots ──────────────────────
-
     if needs_iperf and len(time_series) >= 2:
         print(f"\n{SEPARATOR}")
         print("  Generating comparison plots ...")
@@ -625,7 +543,6 @@ def main() -> None:
     elif needs_iperf:
         print("\n  Only one profile completed — comparison plots skipped.")
 
-    # ── Phase 3: ping latency sweep ──────────────────────────
 
     if needs_ping:
         print(f"\n{SEPARATOR}")
