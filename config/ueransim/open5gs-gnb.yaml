@@ -7,7 +7,7 @@ tac: 1 # Tracking Area Code
 
 linkIp: 10.10.0.4 # gNB's local IP address for Radio Link Simulation (Usually same with local IP)
 ngapIp: 10.10.0.4 # gNB's local IP address for N2 Interface (Usually same with local IP)
-gtpIp: 10.10.0.4 # gNB's local IP address for N3 Interface (Usually same with local IP)
+gtpIp: 172.21.0.4 # gNB's local IP address for N3 Interface (Usually same with local IP)
 
 transportMode: quic # transport can be gtpu or quic
 

@@ -2,6 +2,7 @@
 name = "measurements"
 version = "0.1.0"
 description = ""
+package-mode = false
 authors = ["Muni Venkatesh Ganji"]
 readme = "README.md"
 

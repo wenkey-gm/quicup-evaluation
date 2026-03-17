@@ -12,7 +12,7 @@ Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM.
 - [x] implementation of QUIC with msquic
 - [x] Transport mode flag for gnb and upf 
 - [x] Integrate siemens/edge_shark to monitor traffic
-- [x] Stream music with gstreamer
+- [x] Implement GTPU-IPSec with acs-gcm algoritm 
 
 
 ## Prerequisites

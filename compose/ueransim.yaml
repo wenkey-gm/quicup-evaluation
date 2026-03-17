@@ -18,6 +18,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.4
+      net_quic:
+        ipv4_address: 172.21.0.4
     volumes:
       - ../config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -41,6 +43,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.5
+      net_gtpu:
+        ipv4_address: 172.22.0.5
     volumes:
       - ../config/ueransim/open5gs-gnb-gtpu.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -124,6 +128,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.6
+      net_ipsec:
+        ipv4_address: 172.23.0.6
     volumes:
       - ../config/ueransim/open5gs-gnb-gtpu-ipsec.yaml:/ueransim/config/open5gs-gnb.yaml:Z
       - ../ipsec:/ipsec:Z
@@ -163,3 +169,6 @@ services:
 
 networks:
   shared_network: {}
+  net_quic: {}
+  net_gtpu: {}
+  net_ipsec: {}

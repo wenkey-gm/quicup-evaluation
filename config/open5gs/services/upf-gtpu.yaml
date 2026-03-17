@@ -24,7 +24,7 @@ upf:
 
   gtpu:
     server:
-      - address: 10.10.0.11
+      - address: 172.22.0.11
 
   session:
     - subnet: 10.45.0.0/16

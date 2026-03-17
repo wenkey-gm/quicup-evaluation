@@ -38,7 +38,6 @@ RUN apt-get update && \
     git \
     cmake \
     meson \
-    iperf3 \
     tcpdump \
     libsctp-dev \
     libgnutls28-dev \
@@ -76,6 +75,13 @@ RUN apt-get update && \
     fi && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN git clone https://github.com/esnet/iperf.git /tmp/iperf \
+    && cd /tmp/iperf \
+    && ./configure \
+    && make \
+    && make install \
+    && ldconfig \
+    && rm -rf /tmp/iperf
 
 COPY --from=builder /msquic-install/lib /usr/local/lib
 COPY --from=builder /msquic-install/include /usr/local/include

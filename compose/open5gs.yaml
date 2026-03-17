@@ -99,6 +99,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.11
+      net_gtpu:
+        ipv4_address: 172.22.0.11
     cap_add:
       - NET_ADMIN
     devices:
@@ -129,6 +131,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.12
+      net_quic:
+        ipv4_address: 172.21.0.12
     cap_add:
       - NET_ADMIN
     devices:
@@ -159,6 +163,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.13
+      net_ipsec:
+        ipv4_address: 172.23.0.13
     cap_add:
       - NET_ADMIN
     devices:
@@ -188,3 +194,6 @@ volumes:
 
 networks:
   shared_network: {}
+  net_gtpu: {}
+  net_quic: {}
+  net_ipsec: {}

@@ -16,3 +16,25 @@ networks:
   99-ghost-in-da-edge:
     name: ghost-in-da-edge
     internal: false
+
+  net_quic:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-quic
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+  net_gtpu:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-gtpu
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+  net_ipsec:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-ipsec
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24
