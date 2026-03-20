@@ -11,7 +11,7 @@ global:
 upf:
   pfcp:
     server:
-      - address: 10.10.0.13
+      - address: 10.30.0.13
     client:
   #      smf:     #  UPF PFCP Client try to associate SMF PFCP Server
   #        - address: 127.0.0.4
@@ -34,7 +34,7 @@ upf:
       gateway: 2001:db8:cafe::1
   metrics:
     server:
-      - address: 10.10.0.13
+      - address: 10.30.0.13
         port: 9090
 
 ################################################################################

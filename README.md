@@ -52,10 +52,29 @@ docker compose build base
 docker compose up --build -d
 ```
 
-3. Remove docker compose containers
+3. Start one transport profile (recommended for clean performance comparison)
 
 ```bash
-docker compose down
+# QUIC path only
+docker compose --profile quic up -d --build
+
+# GTP-U path only
+docker compose --profile gtpu up -d --build
+
+# GTP-U + IPsec path only
+docker compose --profile ipsec up -d --build
+```
+
+4. Start all transport profiles in parallel
+
+```bash
+docker compose --profile "*" up -d --build
+```
+
+5. Remove docker compose containers
+
+```bash
+docker compose --profile "*" down -v --remove-orphans
 ```
 
 ### Access UI Elements

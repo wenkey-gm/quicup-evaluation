@@ -3,6 +3,7 @@ services:
     depends_on:
       run:
         condition: service_started
+    profiles: ["quic"]
     pull_policy: never
     build:
       context: ..
@@ -18,16 +19,19 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.4
+      ueransim_net:
+        ipv4_address: 10.20.0.4
       net_quic:
         ipv4_address: 172.21.0.4
     volumes:
-      - ../config/ueransim/open5gs-gnb.yaml:/ueransim/config/open5gs-gnb.yaml:Z
+      - ../config/ueransim/open5gs-gnb-quic.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-gnb-gtpu:
     depends_on:
       run:
         condition: service_started
+    profiles: ["gtpu"]
     pull_policy: never
     build:
       context: ..
@@ -43,6 +47,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.5
+      ueransim_net:
+        ipv4_address: 10.20.0.5
       net_gtpu:
         ipv4_address: 172.22.0.5
     volumes:
@@ -53,6 +59,7 @@ services:
     depends_on:
       ueransim-gnb-quic:
         condition: service_started
+    profiles: ["quic"]
     pull_policy: never
     build:
       context: ..
@@ -66,15 +73,15 @@ services:
     privileged: true
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.16
+      ueransim_net:
+        ipv4_address: 10.20.0.16
     volumes:
-      - ../config/ueransim/open5gs-ue.yaml:/ueransim/config/open5gs-ue.yaml:Z
+      - ../config/ueransim/open5gs-ue-quic.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "
       sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
-      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route del default via 10.20.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
       wait
       "
@@ -83,6 +90,7 @@ services:
     depends_on:
       ueransim-gnb-gtpu:
         condition: service_started
+    profiles: ["gtpu"]
     pull_policy: never
     build:
       context: ..
@@ -96,15 +104,15 @@ services:
     privileged: true
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.17
+      ueransim_net:
+        ipv4_address: 10.20.0.17
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "
       sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
-      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route del default via 10.20.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
       wait
       "
@@ -113,6 +121,7 @@ services:
     depends_on:
       run:
         condition: service_started
+    profiles: ["ipsec"]
     pull_policy: never
     build:
       context: ..
@@ -128,6 +137,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.6
+      ueransim_net:
+        ipv4_address: 10.20.0.6
       net_ipsec:
         ipv4_address: 172.23.0.6
     volumes:
@@ -141,6 +152,7 @@ services:
     depends_on:
       ueransim-gnb-gtpu-ipsec:
         condition: service_started
+    profiles: ["ipsec"]
     pull_policy: never
     build:
       context: ..
@@ -154,15 +166,15 @@ services:
     privileged: true
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.18
+      ueransim_net:
+        ipv4_address: 10.20.0.18
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu-ipsec.yaml:/ueransim/config/open5gs-ue.yaml:Z
     command: /bin/bash -c "
       sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
-      ip route del default via 10.10.0.1 2>/dev/null || true;
+      ip route del default via 10.20.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
       wait
       "
@@ -172,3 +184,11 @@ networks:
   net_quic: {}
   net_gtpu: {}
   net_ipsec: {}
+  ueransim_net:
+    name: ueransim_network
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-ueransim
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24

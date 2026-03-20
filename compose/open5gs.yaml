@@ -4,8 +4,8 @@ services:
     container_name: open5gs-mongodb
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.2
+      ogs_core_network:
+        ipv4_address: 10.30.0.2
     volumes:
       - mongodb:/data/db
       - ../config/open5gs/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro,Z
@@ -23,13 +23,13 @@ services:
     container_name: open5gs-webui
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.3
+      ogs_core_network:
+        ipv4_address: 10.30.0.3
     ports:
       - "9999:9999"
     environment:
-      - DB_URI=mongodb://10.10.0.2:27018/open5gs
-      - WAIT_HOSTS=10.10.0.2:27018
+      - DB_URI=mongodb://10.30.0.2:27018/open5gs
+      - WAIT_HOSTS=10.30.0.2:27018
       - HOSTNAME=0.0.0.0
 
   run:
@@ -49,6 +49,8 @@ services:
     networks:
       shared_network:
         ipv4_address: 10.10.0.10
+      ogs_core_network:
+        ipv4_address: 10.30.0.10
     cap_add:
       - NET_ADMIN
     devices:
@@ -60,7 +62,7 @@ services:
       - ../config/open5gs/services:/usr/local/etc/open5gs:Z
       - ../config/secrets:/secrets:Z
     environment:
-      - DB_URI=mongodb://10.10.0.2:27018/open5gs
+      - DB_URI=mongodb://10.30.0.2:27018/open5gs
     command: >
       /bin/bash -c "
       /wait &&
@@ -80,12 +82,13 @@ services:
   upf-gtpu:
     depends_on:
       - base
+    profiles: ["gtpu"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-gtpu
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.11
+      ogs_core_network:
+        ipv4_address: 10.30.0.11
       net_gtpu:
         ipv4_address: 172.22.0.11
     cap_add:
@@ -112,12 +115,13 @@ services:
   upf-quic:
     depends_on:
       - base
+    profiles: ["quic"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-quic
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.12
+      ogs_core_network:
+        ipv4_address: 10.30.0.12
       net_quic:
         ipv4_address: 172.21.0.12
     cap_add:
@@ -144,12 +148,13 @@ services:
   upf-gtpu-ipsec:
     depends_on:
       - base
+    profiles: ["ipsec"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-gtpu-ipsec
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.13
+      ogs_core_network:
+        ipv4_address: 10.30.0.13
       net_ipsec:
         ipv4_address: 172.23.0.13
     cap_add:
@@ -184,3 +189,11 @@ networks:
   net_gtpu: {}
   net_quic: {}
   net_ipsec: {}
+  ogs_core_network:
+    name: core_network
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-core
+    ipam:
+      config:
+        - subnet: 10.30.0.0/24
