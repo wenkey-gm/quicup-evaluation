@@ -32,6 +32,19 @@ services:
       - WAIT_HOSTS=10.30.0.2:27018
       - HOSTNAME=0.0.0.0
 
+  base:
+    build:
+      context: ..
+      dockerfile: ./config/docker/Dockerfile.base
+      args:
+        dist: ${DIST-ubuntu}
+        tag: ${TAG-latest}
+        username: ${USER}
+    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
+    container_name: quicup-project-ubuntu-base
+    restart: unless-stopped
+    command: /bin/bash -c "echo 'base' services && sleep infinity"
+
   run:
     depends_on:
       - mongodb
