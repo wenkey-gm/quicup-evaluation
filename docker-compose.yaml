@@ -1,8 +1,9 @@
 include:
+  - path: compose/base.yaml
   - path: compose/open5gs.yaml
   - path: compose/ueransim.yaml
   - path: compose/logs.yaml
-
+                                                              
 networks:
   shared_network:
     name: shared_network

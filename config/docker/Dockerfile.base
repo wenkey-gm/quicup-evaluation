@@ -87,5 +87,3 @@ COPY --from=builder /msquic-install/lib /usr/local/lib
 COPY --from=builder /msquic-install/include /usr/local/include
 
 RUN ldconfig
-
-CMD ["/bin/bash"]
