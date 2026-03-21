@@ -219,7 +219,7 @@ void QuicTask::send(NmGnbGtpToQuic* w)
 
     auto* ctx = new SendContext(w);
 
-    if (QUIC_FAILED(status=m_msQuicApi->DatagramSend(m_connection, &ctx->quicBuffer, 1, QUIC_SEND_FLAG_NONE, ctx)))
+    if (QUIC_FAILED(status=m_msQuicApi->DatagramSend(m_connection, &ctx->quicBuffer, 1, QUIC_SEND_FLAG_CANCEL_ON_BLOCKED, ctx))) // QUIC_SEND_FLAG_NONE
     {
         m_logger->err("DatagramSend failed 0x%x\n", status);
         delete ctx;

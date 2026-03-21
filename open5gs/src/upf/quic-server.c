@@ -247,7 +247,7 @@ void quic_server_send_downlink(const char *dest_gnb_ip, uint32_t teid, uint8_t *
                         target_connection,
                         &send_buffer->quic_buffer,
                         1,
-                        QUIC_SEND_FLAG_NONE,
+                        QUIC_SEND_FLAG_CANCEL_ON_BLOCKED, // QUIC_SEND_FLAG_NONE
                         send_buffer)))
     {
         ogs_error("QUIC Downlink: DatagramSend failed! 0x%x", ctx->status);
