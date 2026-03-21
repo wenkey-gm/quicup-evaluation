@@ -32,23 +32,9 @@ services:
       - WAIT_HOSTS=10.30.0.2:27018
       - HOSTNAME=0.0.0.0
 
-  base:
-    build:
-      context: ..
-      dockerfile: ./config/docker/Dockerfile.base
-      args:
-        dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
-    container_name: quicup-project-ubuntu-base
-    restart: unless-stopped
-    command: /bin/bash -c "echo 'base' services && sleep infinity"
-
   run:
     depends_on:
       - mongodb
-      - base
     pull_policy: never
     build:
       context: ..
@@ -93,8 +79,6 @@ services:
       "
 
   upf-gtpu:
-    depends_on:
-      - base
     profiles: ["gtpu"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-gtpu
@@ -126,8 +110,6 @@ services:
       "
 
   upf-quic:
-    depends_on:
-      - base
     profiles: ["quic"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-quic
@@ -159,8 +141,6 @@ services:
       "
 
   upf-gtpu-ipsec:
-    depends_on:
-      - base
     profiles: ["ipsec"]
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     container_name: open5gs-upf-gtpu-ipsec
