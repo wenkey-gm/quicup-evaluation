@@ -1,29 +1,28 @@
-# QUICUP PROJECT (WIP)
+# QUICUP PROJECT
 
-5G Core Network setup with QUICUP and GTP-U using Open5GS and UERANSIM.
+Containerized 5G network setup with QUICUP, GTP-U with IPSec and GTP-U using Open5GS and UERANSIM.
 
-Also, tested on UERANSIM on fedora and OPEN5GS on ubuntu VM.
+## Features
 
-# TODO
-
-- [x] Migrate the project to Gitlab
-- [x] Fix static ports address using docker bridge
+- [x] Implement docker bridge
 - [x] Explore few alternatives in 3GPP: SRv6
-- [x] implementation of QUIC with msquic
-- [x] Transport mode flag for gnb and upf 
+- [x] implementation of quic protocol with msquic
+- [x] integrate quic tunnel into ueransim and open5gs
+- [x] Create parallel containers for gtpu, gtpu-IPsec and quic tunnels on separate networks
+- [x] Transport mode flag for gnb and upf
 - [x] Integrate siemens/edge_shark to monitor traffic
-- [x] Implement GTPU-IPSec with acs-gcm algoritm 
+- [x] Integrate Dozzle to monitor traffic on each container
+- [x] Implement gtpu-IPSec with acs-gcm algorithm.
+- [x] Implement measurement script to plot throughput, jitter, latency and packet loss.
 
 
 ## Prerequisites
 
-- Linux host (for SCTP + TUN device support)
+- Linux host (for SCTP + TUN creation device support)
 - Docker Engine + Docker Compose v2
 - `iptables` and `iproute2` on the host
 
----
-
-## Fresh Install — Step by Step
+## Installation
 
 ### 1. Clone with submodules
 
@@ -36,8 +35,8 @@ openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 
 1. Clone repository with submodules:
 
 ```bash
-git clone https://github.com/wenkey-gm/QUICUP_PROJECT.git
-cd QUICUP_PROJECT
+git clone https://gitlab.cs.fau.de/qa75ruzo/quicup_project.git
+cd quicup_project
 ```
 
 1. Build base image:
@@ -46,22 +45,16 @@ cd QUICUP_PROJECT
 docker compose build base
 ```
 
-2. Build and start services
+3. Start one transport profile
 
 ```bash
-docker compose up --build -d
-```
-
-3. Start one transport profile (recommended for clean performance comparison)
-
-```bash
-# QUIC path only
+# QUIC 
 docker compose --profile quic up -d --build
 
-# GTP-U path only
+# GTP-U
 docker compose --profile gtpu up -d --build
 
-# GTP-U + IPsec path only
+# GTP-U + IPsec
 docker compose --profile ipsec up -d --build
 ```
 
@@ -84,19 +77,6 @@ docker compose --profile "*" down -v --remove-orphans
 | WebUI | <http://localhost:9999> | admin/1423 |
 | Dozzle | <http://localhost:8080/> | - |
 | EdgeShark | <http://localhost:5001/> | - |
-
-### Container Network Configuration
-
-| Container Name | IP Address | Network | Description |
-|----------------|------------|---------|-------------|
-| open5gs-mongodb | 10.10.0.2 | shared_network | MongoDB database |
-| open5gs-webui | 10.10.0.3 | shared_network | Web management interface |
-| ueransim-gnb | 10.10.0.4 | shared_network | 5G gNodeB |
-| debug-logs | 10.10.0.9 | shared_network | Dozzle log viewer |
-| open5gs-run | 10.10.0.10 | shared_network | 5G Core (NRF, AMF, SMF, UPF, etc.) |
-| ueransim-ue | 10.10.0.16 | shared_network | User Equipment (UE) |
-| gostwire | - | ghost-in-da-edge | Network discovery service |
-| edgeshark | - | ghost-in-da-edge | Packet capture service |
 
 
 ## Connect to Internet
@@ -130,33 +110,74 @@ sudo iptables -I DOCKER-USER 1 -i br-open5gs -s 10.45.0.0/16 -j ACCEPT
 
 4. Add traffic returning from internet to 10.45.0.0/16 forward to 10.10.0.10 via br-open5gs (You may need to re-run Step 4 every time you restart your Docker Compose)
 
+## Sanity check for ipsec
+
 
 ```bash
-docker compose down            # stop and remove containers
-docker compose down -v         # also remove volumes (wipes MongoDB)
+docker exec -t ueransim-gnb-gtpu-ipsec ipsec statusall  -- check for Established in security section
 ```
-
----
-
 
 ## Traffic control in docker
 
-1. Limit traffic
+1. Limit traffic on gnb
 
 ```bash
-docker exec -t ueransim-ue-quic tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
-docker exec -t ueransim-ue-gtpu tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
-docker exec -t ueransim-ue-gtpu-ipsec tc qdisc add dev eth0 root netem delay 15ms rate 1mbit
+docker exec -t ueransim-gnb-quic tc qdisc add dev <quic_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
+docker exec -t ueransim-gnb-gtpu tc qdisc add dev <gtpu_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
+docker exec -t ueransim-gnb-gtpu-ipsec tc qdisc add dev <gtpu_ipsec_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
 ```
+
+2. Limit traffic on upf
+
+```bash
+docker exec -t open5gs-upf-quic tc qdisc add dev <quic_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
+docker exec -t open5gs-upf-gtpu tc qdisc add dev <gtpu_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
+docker exec -t open5gs-upf-gtpu-ipsec tc qdisc add dev <gtpu_ipsec_tunnel_logical_interface> root netem delay 25ms 5ms loss 1%
+```
+
 
 2. Restore defaults
 
 ```bash
-docker exec -t ueransim-ue-quic tc qdisc del dev eth0 root
-docker exec -t ueransim-ue-gtpu tc qdisc del dev eth0 root
-docker exec -t ueransim-ue-gtpu-ipsec tc qdisc del dev eth0 root
+docker exec -t ueransim-ue-quic tc qdisc del dev <quic_tunnel_logical_interface> root
+docker exec -t ueransim-ue-gtpu tc qdisc del dev <gtpu_tunnel_logical_interface> root
+docker exec -t ueransim-ue-gtpu-ipsec tc qdisc del dev <gtpu_ipsec_tunnel_logical_interface> root
 ```
 
+## Measurements
+
+1. Install python dependencies
+
+```bash
+pip install .
+```
+
+2. Inside measurements and run measurements script
+
+```bash
+python main.py [-h] [-p PROFILE [PROFILE ...]] [-m METRIC [METRIC ...]]
+               [-pc N] [--iperf-duration SEC]
+
+5G User-Plane Measurements QUIC vs GTP-U vs GTP-U+IPsec
+
+options:
+  -h, --help            show this help message and exit
+  -p, --profile PROFILE [PROFILE ...]
+                        Profiles to run (default: all). Choices: quic, gtpu,
+                        ipsec.
+  -m, --metrics METRIC [METRIC ...]
+                        Metrics to measure (default: all). Choices: rtt,
+                        throughput, jitter.
+  -pc, --ping-count N   Number of ping packets per profile (default: 30).
+  --iperf-duration SEC  Duration of each iperf3 test in seconds (default:
+                        100).
+
+```
+
+
+## Architecture
+
+- [Todo]
 
 ## References
 
