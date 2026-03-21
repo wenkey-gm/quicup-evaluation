@@ -2,15 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import math
 import subprocess
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import matplotlib
 
@@ -33,17 +30,6 @@ class Profile:
     color: str
 
 
-@dataclass(frozen=True)
-class MetricPlot:
-    """Describes one time-series comparison chart."""
-
-    column: str
-    title: str
-    y_label: str
-    filename: str
-    marker: str = "o"
-
-
 @dataclass
 class PerformanceMetrics:
     """Distilled results from a single iperf3 run."""
@@ -56,10 +42,10 @@ class PerformanceMetrics:
 
     def display(self) -> None:
         print("\n  Network Performance Metrics:")
-        print(f"     Bitrate      : {self.bitrate_mbps:.2f} Mbps")
-        print(f"     Jitter       : {self.jitter_ms:.3f} ms")
+        print(f"Bitrate: {self.bitrate_mbps:.2f} Mbps")
+        print(f"Jitter: {self.jitter_ms:.3f} ms")
         print(
-            f"     Packet Loss  : {self.lost_percent:.2f}% "
+            f"Packet Loss : {self.lost_percent:.2f}% "
             f"({self.lost_packets}/{self.total_packets})"
         )
 
@@ -89,24 +75,6 @@ PROFILES: dict[str, Profile] = {
         bind_ip="10.47.0.2",
         color="#e74c3c",
     ),
-}
-
-ALL_METRIC_PLOTS: dict[str, list[MetricPlot]] = {
-    "throughput": [
-        MetricPlot(
-            "bitrate_mbps", "Bitrate Over Time", "Bitrate (Mbps)", "bitrate", "o"
-        ),
-        MetricPlot(
-            "lost_percent",
-            "Packet Loss Over Time",
-            "Packet Loss (%)",
-            "packet_loss",
-            "^",
-        ),
-    ],
-    "jitter": [
-        MetricPlot("jitter_ms", "Jitter Over Time", "Jitter (ms)", "jitter", "s"),
-    ],
 }
 
 AVAILABLE_METRICS = ["rtt", "throughput", "jitter"]
@@ -155,6 +123,14 @@ def docker_exec(
     return run_shell(f"docker exec {container} {cmd}", **kwargs)
 
 
+def select_rx_subset(df: pd.DataFrame) -> pd.DataFrame:
+    """Prefer RX rows when available; otherwise return the full frame."""
+    if "direction" not in df.columns:
+        return df
+    rx_subset = df[df["direction"].str.contains("RX", na=False)]
+    return rx_subset if not rx_subset.empty else df
+
+
 def run_iperf3_test(
     profile: Profile,
     duration: int = IPERF_DURATION_SEC,
@@ -169,32 +145,29 @@ def run_iperf3_test(
     container = profile.ue_container
     iperf_flags = (
         f"-c {profile.server_ip} -B {profile.bind_ip} -p 5201 -i 0.5 -l 1300 "
-        f"-u -b {IPERF_BANDWIDTH} --json-stream -t {duration} --get-server-output"
+        f"-u -b {IPERF_BANDWIDTH} -R --json-stream -t {duration} --get-server-output"
     )
 
     for attempt in range(1, retries + 1):
         print(f"\n  iperf3 UDP test  (attempt {attempt}/{retries}, {duration}s)")
-        print(f"    -> server {profile.server_ip}  bind {profile.bind_ip}")
+        print(f"Server {profile.server_ip}  bind {profile.bind_ip}")
 
         stdout, stderr, rc = docker_exec(
             container, f"iperf3 {iperf_flags}", timeout=duration + 60
         )
 
         if rc != 0:
-            print(f"  Test failed (exit {rc})")
+            print(f"Test failed (exit {rc})")
             if stderr:
-                print(f"    STDERR: {stderr.strip()}")
+                print(f"STDERR: {stderr.strip()}")
             if stdout:
-                print(f"    STDOUT: {stdout.strip()}")
+                print(f"STDOUT: {stdout.strip()}")
 
-            # Some iperf3 builds emit usable JSON stream data before non-zero exit.
             if stdout:
                 try:
                     parsed = parse_iperf3_output(stdout)
                     if parsed.get("intervals"):
-                        print(
-                            "    Parsed interval data from non-zero iperf3 run; continuing"
-                        )
+                        print("Parsed interval data from non-zero iperf3 run")
                         return parsed
                 except Exception:
                     pass
@@ -203,23 +176,23 @@ def run_iperf3_test(
                 "server is busy" in (stderr or "") + (stdout or "")
                 and attempt < retries
             ):
-                print(f"    Server busy — retrying in {retry_delay}s ...")
+                print(f"Server busy, retrying in {retry_delay}s ...")
                 time.sleep(retry_delay)
                 continue
             return None
 
         if not stdout:
-            print("  iperf3 produced no output")
+            print("iperf3 produced no output")
             return None
 
         try:
             results = parse_iperf3_output(stdout)
 
-            print("  iperf3 test completed successfully")
+            print("iperf3 test completed successfully")
             return results
 
         except Exception as exc:
-            print(f"  Failed to parse iperf3 stream: {exc}")
+            print(f"Failed to parse iperf3 stream: {exc}")
             return None
     return None
 
@@ -229,8 +202,6 @@ def parse_iperf3_output(stdout: str) -> dict:
     payload = stdout.strip()
     if not payload:
         raise ValueError("iperf3 produced empty output")
-
-    # Standard iperf3 `-J` output: a single JSON object with start/intervals/end.
     try:
         top_level = json.loads(payload)
         if isinstance(top_level, dict) and (
@@ -240,7 +211,6 @@ def parse_iperf3_output(stdout: str) -> dict:
     except json.JSONDecodeError:
         pass
 
-    # iperf3 `--json-stream` output: newline-delimited event payloads.
     results: dict = {"intervals": []}
     for line in payload.splitlines():
         if not line.strip():
@@ -248,7 +218,6 @@ def parse_iperf3_output(stdout: str) -> dict:
         try:
             obj = json.loads(line)
         except json.JSONDecodeError:
-            # Skip unrelated/corrupted lines and keep parsing remaining events.
             continue
 
         event = obj.get("event")
@@ -263,7 +232,6 @@ def parse_iperf3_output(stdout: str) -> dict:
         elif event == "server_output_json":
             results["server_output_json"] = data
         elif "server_output_json" in obj:
-            # Handle top-level wrapper objects that include server_output_json
             sobj = obj.get("server_output_json")
             if isinstance(sobj, dict):
                 if "start" in sobj:
@@ -276,18 +244,14 @@ def parse_iperf3_output(stdout: str) -> dict:
             else:
                 results["server_output_json"] = sobj
         elif event == "error":
-            print(f"    iperf3 stream error: {data}")
+            print(f"iperf3 stream error: {data}")
         elif isinstance(obj, dict) and (
             "start" in obj or "intervals" in obj or "end" in obj
         ):
-            # Merge defensive fallback for mixed/non-event JSON lines instead
-            # of returning immediately so we keep parsing remaining stream
             if "start" in obj:
                 results["start"] = obj.get("start")
             if "intervals" in obj:
-                # append any intervals found in the object
                 ivs = obj.get("intervals") or []
-                # ensure we always extend with a list of interval dicts
                 results["intervals"].extend(ivs)
             if "end" in obj:
                 results["end"] = obj.get("end")
@@ -314,7 +278,6 @@ def parse_summary(results: dict) -> PerformanceMetrics | None:
         return None
     try:
         end = _server_output(results)["end"]
-        # Prefer a received/remote-facing summary when available for downstream metrics.
         summary = (
             end.get("sum_received_bidir_reverse")
             or end.get("sum_bidir_reverse")
@@ -330,7 +293,7 @@ def parse_summary(results: dict) -> PerformanceMetrics | None:
             lost_percent=summary.get("lost_percent", 0),
         )
     except KeyError as exc:
-        print(f"  Could not parse iperf3 summary — missing key: {exc}")
+        print(f"Missing key: {exc}")
         return None
 
 
@@ -343,15 +306,8 @@ def parse_intervals(results: dict) -> pd.DataFrame:
     rows: list[dict] = []
     for interval in intervals:
         streams = interval.get("streams", [])
-
-        # Some iperf3 JSON variants expose per-interval values in "sum" only.
         if not streams and interval.get("sum"):
             streams = [interval["sum"]]
-
-        # For bidir output the per-interval reverse-direction summary can
-        # appear in "sum_bidir_reverse". Only append it when the
-        # existing `streams` array does not already contain a reverse entry
-        # to avoid producing duplicate RX rows.
         if interval.get("sum_bidir_reverse"):
             has_reverse = any(
                 (s.get("sender") is False) or (s.get("sender") == False)
@@ -394,10 +350,6 @@ def save_json_log(results: dict, output_dir: Path) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = output_dir / f"iperf3_{stamp}.jsonl"
-
-    # If the parsed results look like a stream (have start/intervals/end),
-    # write one JSON object per line as event records. Otherwise fall back
-    # to writing a single pretty-printed JSON object (still with .jsonl ext).
     lines: list[str] = []
     start = results.get("start")
     intervals = results.get("intervals") or []
@@ -431,6 +383,85 @@ def save_json_log(results: dict, output_dir: Path) -> Path:
     return path
 
 
+def plot_metric_comparisons(
+    series: dict[str, tuple[pd.DataFrame, str]],
+    timestamp: str,
+    output_dir: Path,
+) -> None:
+    """Generate one chart per metric comparing all profiles on shared axes."""
+    if len(series) < 2:
+        return
+
+    sns.set_theme(style="whitegrid", context="talk")
+
+    metrics_to_plot = [
+        (
+            "bitrate_mbps",
+            "Throughput Comparison",
+            "Throughput (Mbps)",
+            "throughput_comparison",
+        ),
+        ("jitter_ms", "Jitter Comparison", "Jitter (ms)", "jitter_comparison"),
+        (
+            "lost_percent",
+            "Packet Loss Comparison",
+            "Packet Loss (%)",
+            "loss_comparison",
+        ),
+    ]
+
+    for column, title, y_label, filename in metrics_to_plot:
+        fig, ax = plt.subplots(figsize=(12, 5), dpi=300)
+        plotted = False
+        max_time = 0.0
+
+        for label, (df, color) in series.items():
+            if df.empty or column not in df.columns or "time" not in df.columns:
+                continue
+
+            subset = select_rx_subset(df)
+
+            if subset.empty:
+                continue
+
+            ax.plot(
+                subset["time"],
+                subset[column],
+                label=label,
+                color=color,
+                linewidth=2.4,
+                alpha=0.9,
+            )
+            plotted = True
+            max_time = max(max_time, float(subset["time"].max()))
+
+        if not plotted:
+            plt.close(fig)
+            continue
+
+        ax.set_title(f"{title} (RX)", fontsize=16, fontweight="bold", pad=14)
+        ax.set_xlabel("Time (s)", fontsize=13, fontweight="bold")
+        ax.set_ylabel(y_label, fontsize=13, fontweight="bold")
+        ax.grid(True, which="major", linestyle="--", linewidth=0.5, alpha=0.8)
+
+        current_ylim = ax.get_ylim()
+        ax.set_ylim(bottom=0, top=max(current_ylim[1] * 1.15, 0.5))
+        ax.set_xlim(left=0, right=max_time)
+        ax.legend(
+            loc="upper right",
+            frameon=True,
+            fontsize=10,
+            facecolor="white",
+            framealpha=0.9,
+        )
+
+        plt.tight_layout()
+        out_path = output_dir / f"{filename}_{timestamp}.png"
+        fig.savefig(out_path, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  Saved metric plot: {out_path}")
+
+
 def plot_individual_summaries(
     series: dict[str, tuple[pd.DataFrame, str]],
     timestamp: str,
@@ -439,24 +470,20 @@ def plot_individual_summaries(
     if not series:
         return
 
-    # Academic style: High-contrast white with modern tick marks
     sns.set_theme(style="ticks")
 
     for label, (df, color) in series.items():
         if df.empty:
             continue
 
-        # Increase DPI for high-resolution sharp images
         fig, axes = plt.subplots(
             nrows=3, ncols=1, figsize=(11, 9), sharex=True, dpi=300
         )
         ax_bitrate, ax_jitter, ax_loss = axes
-
         fig.suptitle(
             f"5G User Plane Analysis: {label}", fontsize=18, fontweight="bold", y=0.98
         )
 
-        # Handle bitrate scaling
         max_val = df["bitrate_mbps"].max()
         scale, unit = (1000.0, "Gbps") if max_val >= 1000 else (1.0, "Mbps")
 
@@ -469,7 +496,6 @@ def plot_individual_summaries(
             line_style = (0, (5, 2)) if is_tx else "-"
             legend_label = direction if direction else "Throughput"
 
-            # --- Panel 1: Data Rate (with Area Fill) ---
             (line,) = ax_bitrate.plot(
                 subset["time"],
                 subset["bitrate_mbps"] / scale,
@@ -479,7 +505,7 @@ def plot_individual_summaries(
                 label=legend_label,
                 zorder=3,
             )
-            # Area Fill: Fills the space between 0 and the line
+
             ax_bitrate.fill_between(
                 subset["time"],
                 subset["bitrate_mbps"] / scale,
@@ -488,7 +514,6 @@ def plot_individual_summaries(
                 zorder=2,
             )
 
-            # --- Panel 2: Jitter (with Area Fill) ---
             ax_jitter.plot(
                 subset["time"],
                 subset["jitter_ms"],
@@ -503,7 +528,6 @@ def plot_individual_summaries(
                 subset["time"], subset["jitter_ms"], color=color, alpha=0.1, zorder=2
             )
 
-            # --- Panel 3: Packet Loss (with markers) ---
             ax_loss.plot(
                 subset["time"],
                 subset["lost_percent"],
@@ -517,9 +541,7 @@ def plot_individual_summaries(
                 zorder=3,
             )
 
-        # --- REFINEMENT & GROUNDING ---
         for i, ax in enumerate(axes):
-            # Clean light-gray grid
             ax.grid(
                 True,
                 which="major",
@@ -530,12 +552,10 @@ def plot_individual_summaries(
                 zorder=1,
             )
 
-            # Ground Y-axis at 0 and add 15% headroom
             current_ylim = ax.get_ylim()
             headroom = max(current_ylim[1] * 1.15, 0.5)
             ax.set_ylim(bottom=0, top=headroom)
 
-            # Styling
             ax.tick_params(axis="both", which="major", labelsize=11)
             ax.legend(
                 loc="upper left",
@@ -545,7 +565,6 @@ def plot_individual_summaries(
                 framealpha=0.9,
             ).set_zorder(100)
 
-        # High-impact labels
         ax_bitrate.set_ylabel(
             f"Throughput\n({unit})", fontsize=12, fontweight="bold", labelpad=10
         )
@@ -557,17 +576,13 @@ def plot_individual_summaries(
         )
         ax_loss.set_xlabel("Time (s)", fontsize=13, fontweight="bold")
 
-        # Formatting X-axis
         max_time = df["time"].max()
         ax_loss.set_xlim(0, max_time)
         ax_loss.set_xticks(np.arange(0, max_time + 1, 20))
 
-        sns.despine(
-            fig, offset=5, trim=False
-        )  # Offset gives the labels room to breathe
+        sns.despine(fig, offset=5, trim=False)
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-        # Save as high-res PNG and vector PDF
         safe_name = re.sub(r"[^a-zA-Z0-9]", "_", label).lower()
         fig.savefig(output_dir / f"{safe_name}_{timestamp}.png", bbox_inches="tight")
         plt.close(fig)
@@ -578,7 +593,7 @@ def collect_ping_rtt(
 ) -> list[float]:
     """Ping *profile.server_ip* from inside the UE container and return RTTs in ms."""
     print(
-        f"\n  Pinging {profile.server_ip} via {profile.ue_container} ({count} packets) ..."
+        f"\nPinging {profile.server_ip} via {profile.ue_container} ({count} packets) ..."
     )
     stdout, _, rc = docker_exec(
         profile.ue_container,
@@ -586,11 +601,11 @@ def collect_ping_rtt(
         timeout=int(count * (PING_INTERVAL_SEC + 1)) + 30,
     )
     if rc != 0 or not stdout:
-        print("  Ping test failed")
+        print("Ping test failed")
         return []
 
     rtts = [float(m) for m in re.findall(r"time=([\d.]+)\s*ms", stdout)]
-    print(f"  Collected {len(rtts)} RTT samples")
+    print(f"Collected {len(rtts)} RTT samples")
     return rtts
 
 
@@ -618,7 +633,7 @@ def plot_latency_comparison(
         if rtts
     ]
     if not frames:
-        print("  No ping data available — skipping latency plot")
+        print("No ping data available — skipping latency plot")
         return
 
     combined = pd.concat(frames, ignore_index=True)
@@ -667,7 +682,7 @@ def plot_latency_comparison(
     plt.tight_layout()
     path = output_dir / f"ping_latency_comparison_{timestamp}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
-    print(f"  Saved plot : {path}")
+    print(f"Saved plot : {path}")
     plt.close()
 
 
@@ -679,14 +694,14 @@ def measure_profile(
     Returns ``(raw_results, metrics)`` on success, or *None* on failure.
     """
     if not is_container_running(profile.ue_container):
-        print(f"  Container '{profile.ue_container}' is not running — skipping")
+        print(f"Container '{profile.ue_container}' is not running")
         return None
 
-    print(f"  Container '{profile.ue_container}' is up")
+    print(f"Container '{profile.ue_container}' is up")
 
     raw_results = run_iperf3_test(profile, duration=duration)
     if raw_results is None:
-        print(f"  Failed to collect iperf3 data for {profile.label}")
+        print(f"Failed to collect iperf3 data for {profile.label}")
         return None
 
     save_json_log(raw_results, OUTPUT_DIR)
@@ -704,7 +719,7 @@ SEPARATOR = "=" * 55
 
 def build_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="5G User-Plane Measurements — QUIC vs GTP-U vs GTP-U+IPsec",
+        description="5G User-Plane Measurements QUIC vs GTP-U vs GTP-U+IPsec",
     )
     parser.add_argument(
         "-p",
@@ -747,10 +762,8 @@ def main() -> None:
     active_profiles = [PROFILES[key] for key in args.profile]
     selected_metrics = set(args.metrics)
 
-    banner = " vs ".join(p.label for p in active_profiles)
     metric_tags = ", ".join(sorted(selected_metrics))
-    print(f"=== 5G Measurements \u2014 {banner} ===\n")
-    print(f"  Metrics : {metric_tags}")
+    print(f"Metrics : {metric_tags}")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -763,7 +776,7 @@ def main() -> None:
     if needs_iperf:
         for profile in active_profiles:
             print(f"\n{SEPARATOR}")
-            print(f"  Profile: {profile.label}")
+            print(f"Profile: {profile.label}")
             print(SEPARATOR)
 
             result = measure_profile(profile, duration=args.iperf_duration)
@@ -779,16 +792,17 @@ def main() -> None:
 
     if needs_iperf and len(time_series) >= 2:
         print(f"\n{SEPARATOR}")
-        print("  Generating comparison plots ...")
+        print("Generating comparison plots...")
         print(SEPARATOR)
 
+        plot_metric_comparisons(time_series, timestamp, OUTPUT_DIR)
         plot_individual_summaries(time_series, timestamp, OUTPUT_DIR)
     elif needs_iperf:
-        print("\n  Fewer than two profiles completed — comparison plots skipped.")
+        print("\n Fewer than two profiles completed, so comparison plots skipped.")
 
     if needs_ping:
         print(f"\n{SEPARATOR}")
-        print("  Running ping latency tests ...")
+        print("Running ping latency tests ...")
         print(SEPARATOR)
 
         rtt_data: dict[str, list[float]] = {}
@@ -796,7 +810,7 @@ def main() -> None:
 
         for profile in active_profiles:
             if not is_container_running(profile.ue_container):
-                print(f"  '{profile.ue_container}' not running — skipping ping")
+                print(f"{profile.ue_container} not running — skipping ping")
                 continue
             rtt_data[profile.label] = collect_ping_rtt(profile, count=args.ping_count)
             palette[profile.label] = profile.color
@@ -804,7 +818,7 @@ def main() -> None:
         if len(rtt_data) >= 2:
             plot_latency_comparison(rtt_data, palette, timestamp, OUTPUT_DIR)
         else:
-            print("  Not enough profiles for a latency comparison.")
+            print("Not enough profiles for a latency comparison.")
 
     print("\nAll measurements complete!")
 
