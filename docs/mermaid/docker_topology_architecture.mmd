@@ -1,5 +1,9 @@
 flowchart TB
 
+    classDef quic fill:#E8F7EC,stroke:#2E9B4B,stroke-width:2px,color:#114D22;
+    classDef gtpu fill:#E9F2FF,stroke:#2F6FDF,stroke-width:2px,color:#10356F;
+    classDef ipsec fill:#FDEBEC,stroke:#D64545,stroke-width:2px,color:#7A1E1E;
+
     Internet((Internet))
 
     subgraph BR_RAN [ueransim_net: 10.20.0.0/24]
@@ -73,3 +77,7 @@ flowchart TB
     UPF_Q_CORE -. "N6 (10.46.0.1)" .-> Internet
     UPF_G_CORE -. "N6 (10.45.0.1)" .-> Internet
     UPF_I_CORE -. "N6 (10.47.0.1)" .-> Internet
+
+    class UE_q,gNB_Q_RAN,gNB_Q_SHARED,gNB_Q_N3,UPF_Q_N3,UPF_Q_CORE quic;
+    class UE_g,gNB_G_RAN,gNB_G_SHARED,gNB_G_N3,UPF_G_N3,UPF_G_CORE gtpu;
+    class UE_i,gNB_I_RAN,gNB_I_SHARED,gNB_I_N3,UPF_I_N3,UPF_I_CORE ipsec;
