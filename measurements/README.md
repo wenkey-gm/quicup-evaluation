@@ -23,4 +23,4 @@ Usage
     python main.py -p quic -m rtt throughput # combine both flags
     python main.py --ping-count 50           # 50 ping packets (default: 30)
     python main.py --iperf-duration 60       # 60s iperf3 test (default: 100)
-
+    python main.py -dir uplink               # specify whether to use uplink or downlink
