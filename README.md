@@ -14,6 +14,7 @@ Containerized 5G network setup with QUICUP, GTP-U with IPSec and GTP-U using Ope
 - [x] Integrate Dozzle to monitor traffic on each container
 - [x] Implement gtpu-IPSec with acs-gcm algorithm.
 - [x] Implement measurement script to plot throughput, jitter, latency and packet loss.
+- [x] Implement docker profiles to start specific tunnel needed
 
 
 ## Prerequisites
@@ -237,7 +238,7 @@ docker exec -d open5gs-upf-gtpu pkill iperf3
 The following Mermaid diagram shows the container and network topology used by the project. The original source is available at `docs/mermaid/docker_topology_architecture.mmd`.
 
 ```mermaid
-flowchart TB
+flowchart LR
 
   classDef quic fill:#E8F7EC,stroke:#2E9B4B,stroke-width:2px,color:#114D22;
   classDef gtpu fill:#E9F2FF,stroke:#2F6FDF,stroke-width:2px,color:#10356F;
