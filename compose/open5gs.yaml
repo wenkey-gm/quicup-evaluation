@@ -105,8 +105,8 @@ services:
       ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml &&
-      iperf3 -s -B 10.45.0.1 --json
+      iperf3 -s -B 10.45.0.1 --json -D &&
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
       "
 
   upf-quic:
@@ -136,8 +136,8 @@ services:
       ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml &&
-      iperf3 -s -B 10.46.0.1 --json 
+      iperf3 -s -B 10.46.0.1 --json -D &&
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml
       "
 
   upf-gtpu-ipsec:
@@ -170,8 +170,8 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       /ipsec/ipsec_setup.sh upf_ipsec_gtpu.conf &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml &&
-      iperf3 -s -B 10.47.0.1 --json
+      iperf3 -s -B 10.47.0.1 --json -D &&
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml
       "
 
 volumes:
