@@ -4,80 +4,57 @@ flowchart LR
     classDef gtpu fill:#E9F2FF,stroke:#2F6FDF,stroke-width:2px,color:#10356F;
     classDef ipsec fill:#FDEBEC,stroke:#D64545,stroke-width:2px,color:#7A1E1E;
 
-    Internet((Internet))
+    Internet(("🌐 Internet"))
 
-    subgraph BR_RAN [ueransim_net: 10.20.0.0/24]
-        direction LR
-        UE_q[ue-quic] -- "N1 (NAS/Data)" --> gNB_Q_RAN[gNB-Quic]
-        UE_g[ue-gtpu] -- "N1 (NAS/Data)" --> gNB_G_RAN[gNB-Gtpu]
-        UE_i[ue-ipsec] -- "N1 (NAS/Data)" --> gNB_I_RAN[gNB-Ipsec]
-    end
+    %% RAN nodes
+    UE_q["📱 ue-quic"]
+    UE_g["📱 ue-gtpu"]
+    UE_i["📱 ue-ipsec"]
 
-    subgraph BR_SHARED [shared_network: 10.10.0.0/16]
-        direction LR
-        AMF_SMF_SHARED[Open5GS Core Functions]
-        gNB_Q_SHARED[gNB-Quic]
-        gNB_G_SHARED[gNB-Gtpu]
-        gNB_I_SHARED[gNB-Ipsec]
-    end
+    %% gNB nodes (shared addresses listed)
+    gNB_Q["📡 gNB-Quic (10.10.0.4 / 10.20.0.4 / 172.21.0.4)"]
+    gNB_G["📡 gNB-Gtpu (10.10.0.5 / 10.20.0.5 / 172.22.0.5)"]
+    gNB_I["📡 gNB-Ipsec (10.10.0.6 / 10.20.0.6 / 172.23.0.6)"]
 
-    subgraph BR_N3 [N3 Transport Bridges]
-        direction TB
+    %% Core and dataplane nodes
+    AMF_SMF["🧠 Open5GS Core Functions (10.10.0.10 / 10.30.0.10)"]
+    DB[(MongoDB)]
+    WebUI[open5gs-webui]
+    UPF_Q["🔁 UPF-Quic (172.21.0.12 / 10.30.0.12)"]
+    UPF_G["🔁 UPF-Gtpu (172.22.0.11 / 10.30.0.11)"]
+    UPF_I["🔁 UPF-Ipsec (172.23.0.13 / 10.30.0.13)"]
 
-        subgraph Net_QUIC [net_quic: 172.21.0.0/24]
-            gNB_Q_N3[gNB-Quic] -- "N3: QUICUP" --> UPF_Q_N3[UPF-Quic]
-        end
+    %% Inline connections (replacing subgraph links)
+    UE_q -- "N1: 10.20.0.16 ↔ 10.20.0.4" --> gNB_Q
+    UE_g -- "N1: 10.20.0.17 ↔ 10.20.0.5" --> gNB_G
+    UE_i -- "N1: 10.20.0.18 ↔ 10.20.0.6" --> gNB_I
 
-        subgraph Net_GTPU [net_gtpu: 172.22.0.0/24]
-            gNB_G_N3[gNB-Gtpu] -- "N3: GTP-U" --> UPF_G_N3[UPF-Gtpu]
-        end
+    gNB_Q -- "N3: 172.21.0.4 ↔ 172.21.0.12" --> UPF_Q
+    gNB_G -- "N3: 172.22.0.5 ↔ 172.22.0.11" --> UPF_G
+    gNB_I -- "N3: 172.23.0.6 ↔ 172.23.0.13" --> UPF_I
 
-        subgraph Net_IPSEC [net_ipsec: 172.23.0.0/24]
-            gNB_I_N3[gNB-Ipsec] -- "N3: IPsec" --> UPF_I_N3[UPF-Ipsec]
-        end
-    end
-
-    subgraph BR_CORE [ogs_core_network: 10.30.0.0/24]
-        direction TB
-        AMF_SMF[Open5GS Core Functions]
-        DB[(MongoDB)]
-        WebUI[open5gs-webui]
-        UPF_Q_CORE[UPF-Quic]
-        UPF_G_CORE[UPF-Gtpu]
-        UPF_I_CORE[UPF-Ipsec]
-    end
+    DB
+    WebUI
 
 
     WebUI -- "DB_URI" --> DB
     AMF_SMF -- "DB_URI" --> DB
 
-    gNB_Q_RAN ---|same gNB| gNB_Q_SHARED
-    gNB_G_RAN ---|same gNB| gNB_G_SHARED
-    gNB_I_RAN ---|same gNB| gNB_I_SHARED
+    gNB_Q -- "N2: 10.10.0.4 ↔ 10.10.0.10" --> AMF_SMF
+    gNB_G -- "N2: 10.10.0.5 ↔ 10.10.0.10" --> AMF_SMF
+    gNB_I -- "N2: 10.10.0.6 ↔ 10.10.0.10" --> AMF_SMF
 
+    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.12" .-> UPF_Q
+    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.11" .-> UPF_G
+    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.13" .-> UPF_I
 
-    gNB_Q_SHARED -. "N2 (NGAP Control)" .-> AMF_SMF_SHARED
-    gNB_G_SHARED -. "N2 (NGAP Control)" .-> AMF_SMF_SHARED
-    gNB_I_SHARED -. "N2 (NGAP Control)" .-> AMF_SMF_SHARED
+    UPF_Q -. "N6: 10.46.0.1" .-> Internet
+    UPF_G -. "N6: 10.45.0.1" .-> Internet
+    UPF_I -. "N6: 10.47.0.1" .-> Internet
 
-    AMF_SMF_SHARED -. "Same AMF/SMF/NRF" .-> AMF_SMF
+    class UE_q,gNB_Q,UPF_Q quic;
+    class UE_g,gNB_G,UPF_G gtpu;
+    class UE_i,gNB_I,UPF_I ipsec;
 
-    AMF_SMF -. "N4 (PFCP Control)" .-> UPF_Q_CORE
-    AMF_SMF -. "N4 (PFCP Control)" .-> UPF_G_CORE
-    AMF_SMF -. "N4 (PFCP Control)" .-> UPF_I_CORE
-
-    UPF_Q_N3 ---|same UPF| UPF_Q_CORE
-    UPF_G_N3 ---|same UPF| UPF_G_CORE
-    UPF_I_N3 ---|same UPF| UPF_I_CORE
-
-    gNB_Q_RAN ---|same gNB| gNB_Q_N3
-    gNB_G_RAN ---|same gNB| gNB_G_N3
-    gNB_I_RAN ---|same gNB| gNB_I_N3
-
-    UPF_Q_CORE -. "N6 (10.46.0.1)" .-> Internet
-    UPF_G_CORE -. "N6 (10.45.0.1)" .-> Internet
-    UPF_I_CORE -. "N6 (10.47.0.1)" .-> Internet
-
-    class UE_q,gNB_Q_RAN,gNB_Q_SHARED,gNB_Q_N3,UPF_Q_N3,UPF_Q_CORE quic;
-    class UE_g,gNB_G_RAN,gNB_G_SHARED,gNB_G_N3,UPF_G_N3,UPF_G_CORE gtpu;
-    class UE_i,gNB_I_RAN,gNB_I_SHARED,gNB_I_N3,UPF_I_N3,UPF_I_CORE ipsec;
+    %% Legend
+    L_UE["📱 UE"] --- L_gNB["📡 gNB"] --- L_CORE["🧠 Core"] --- L_DP["🔁 Dataplane"] --- L_Internet["🌐 Internet"]
