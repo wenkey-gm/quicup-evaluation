@@ -5,7 +5,6 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.2
     volumes:
       - mongodb:/data/db
@@ -25,7 +24,6 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.3
     ports:
       - "9999:9999"
@@ -49,10 +47,8 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.10
       shared_network:
-        priority: 50
         ipv4_address: 10.10.0.10
     cap_add:
       - NET_ADMIN
@@ -89,10 +85,8 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.11
       net_gtpu:
-        priority: 50
         ipv4_address: 172.22.0.11
     cap_add:
       - NET_ADMIN
@@ -111,7 +105,8 @@ services:
       ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml &&
+      iperf3 -s -B 10.45.0.1 --json
       "
 
   upf-quic:
@@ -121,10 +116,8 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.12
       net_quic:
-        priority: 50
         ipv4_address: 172.21.0.12
     cap_add:
       - NET_ADMIN
@@ -143,7 +136,8 @@ services:
       ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml &&
+      iperf3 -s -B 10.46.0.1 --json 
       "
 
   upf-gtpu-ipsec:
@@ -153,10 +147,8 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
-        priority: 100
         ipv4_address: 10.30.0.13
       net_ipsec:
-        priority: 50
         ipv4_address: 172.23.0.13
     cap_add:
       - NET_ADMIN
@@ -178,7 +170,8 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       /ipsec/ipsec_setup.sh upf_ipsec_gtpu.conf &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml
+      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml &&
+      iperf3 -s -B 10.47.0.1 --json
       "
 
 volumes:
