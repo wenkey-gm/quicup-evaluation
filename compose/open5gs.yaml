@@ -5,6 +5,7 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.2
     volumes:
       - mongodb:/data/db
@@ -24,6 +25,7 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.3
     ports:
       - "9999:9999"
@@ -46,10 +48,12 @@ services:
     image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.10
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.10
+      shared_network:
+        priority: 50
+        ipv4_address: 10.10.0.10
     cap_add:
       - NET_ADMIN
     devices:
@@ -85,8 +89,10 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.11
       net_gtpu:
+        priority: 50
         ipv4_address: 172.22.0.11
     cap_add:
       - NET_ADMIN
@@ -115,8 +121,10 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.12
       net_quic:
+        priority: 50
         ipv4_address: 172.21.0.12
     cap_add:
       - NET_ADMIN
@@ -145,8 +153,10 @@ services:
     restart: unless-stopped
     networks:
       ogs_core_network:
+        priority: 100
         ipv4_address: 10.30.0.13
       net_ipsec:
+        priority: 50
         ipv4_address: 172.23.0.13
     cap_add:
       - NET_ADMIN

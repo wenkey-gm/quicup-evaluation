@@ -17,12 +17,15 @@ services:
     container_name: ueransim-gnb-quic
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.4
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.4
       net_quic:
+        priority: 80
         ipv4_address: 172.21.0.4
+      shared_network:
+        priority: 50
+        ipv4_address: 10.10.0.4
     volumes:
       - ../config/ueransim/open5gs-gnb-quic.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -45,12 +48,15 @@ services:
     container_name: ueransim-gnb-gtpu
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.5
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.5
       net_gtpu:
+        priority: 80
         ipv4_address: 172.22.0.5
+      shared_network:
+        priority: 50
+        ipv4_address: 10.10.0.5
     volumes:
       - ../config/ueransim/open5gs-gnb-gtpu.yaml:/ueransim/config/open5gs-gnb.yaml:Z
     command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
@@ -74,6 +80,7 @@ services:
     restart: unless-stopped
     networks:
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.16
     volumes:
       - ../config/ueransim/open5gs-ue-quic.yaml:/ueransim/config/open5gs-ue.yaml:Z
@@ -105,6 +112,7 @@ services:
     restart: unless-stopped
     networks:
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.17
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu.yaml:/ueransim/config/open5gs-ue.yaml:Z
@@ -135,12 +143,15 @@ services:
     container_name: ueransim-gnb-gtpu-ipsec
     restart: unless-stopped
     networks:
-      shared_network:
-        ipv4_address: 10.10.0.6
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.6
       net_ipsec:
+        priority: 80
         ipv4_address: 172.23.0.6
+      shared_network:
+        priority: 50
+        ipv4_address: 10.10.0.6
     volumes:
       - ../config/ueransim/open5gs-gnb-gtpu-ipsec.yaml:/ueransim/config/open5gs-gnb.yaml:Z
       - ../ipsec:/ipsec:Z
@@ -167,6 +178,7 @@ services:
     restart: unless-stopped
     networks:
       ueransim_net:
+        priority: 100
         ipv4_address: 10.20.0.18
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu-ipsec.yaml:/ueransim/config/open5gs-ue.yaml:Z
