@@ -6,17 +6,14 @@ flowchart LR
 
     Internet(("🌐 Internet"))
 
-    %% RAN nodes
     UE_q["📱 ue-quic"]
     UE_g["📱 ue-gtpu"]
     UE_i["📱 ue-ipsec"]
 
-    %% gNB nodes (shared addresses listed)
     gNB_Q["📡 gNB-Quic (10.10.0.4 / 10.20.0.4 / 172.21.0.4)"]
     gNB_G["📡 gNB-Gtpu (10.10.0.5 / 10.20.0.5 / 172.22.0.5)"]
     gNB_I["📡 gNB-Ipsec (10.10.0.6 / 10.20.0.6 / 172.23.0.6)"]
 
-    %% Core and dataplane nodes
     AMF_SMF["🧠 Open5GS Core Functions (10.10.0.10 / 10.30.0.10)"]
     DB[(MongoDB)]
     WebUI[open5gs-webui]
@@ -24,37 +21,35 @@ flowchart LR
     UPF_G["🔁 UPF-Gtpu (172.22.0.11 / 10.30.0.11)"]
     UPF_I["🔁 UPF-Ipsec (172.23.0.13 / 10.30.0.13)"]
 
-    %% Inline connections (replacing subgraph links)
-    UE_q -- "N1: 10.20.0.16 ↔ 10.20.0.4" --> gNB_Q
-    UE_g -- "N1: 10.20.0.17 ↔ 10.20.0.5" --> gNB_G
-    UE_i -- "N1: 10.20.0.18 ↔ 10.20.0.6" --> gNB_I
+    UE_q <-- "N1: 10.20.0.16 ↔ 10.20.0.4" --> gNB_Q
+    UE_g <-- "N1: 10.20.0.17 ↔ 10.20.0.5" --> gNB_G
+    UE_i <-- "N1: 10.20.0.18 ↔ 10.20.0.6" --> gNB_I
 
-    gNB_Q -- "N3: 172.21.0.4 ↔ 172.21.0.12" --> UPF_Q
-    gNB_G -- "N3: 172.22.0.5 ↔ 172.22.0.11" --> UPF_G
-    gNB_I -- "N3: 172.23.0.6 ↔ 172.23.0.13" --> UPF_I
+    gNB_Q <-- "N3: 172.21.0.4 ↔ 172.21.0.12" --> UPF_Q
+    gNB_G <-- "N3: 172.22.0.5 ↔ 172.22.0.11" --> UPF_G
+    gNB_I <-- "N3: 172.23.0.6 ↔ 172.23.0.13" --> UPF_I
 
     DB
     WebUI
 
 
-    WebUI -- "DB_URI" --> DB
-    AMF_SMF -- "DB_URI" --> DB
+    WebUI <-- "DB_URI:mongodb" --> DB
+    AMF_SMF -. "DB_URI:mongodb" .-> DB
 
-    gNB_Q -- "N2: 10.10.0.4 ↔ 10.10.0.10" --> AMF_SMF
-    gNB_G -- "N2: 10.10.0.5 ↔ 10.10.0.10" --> AMF_SMF
-    gNB_I -- "N2: 10.10.0.6 ↔ 10.10.0.10" --> AMF_SMF
+    gNB_Q <-. "N2: 10.10.0.4 ↔ 10.10.0.10" .-> AMF_SMF
+    gNB_G <-. "N2: 10.10.0.5 ↔ 10.10.0.10" .-> AMF_SMF
+    gNB_I <-. "N2: 10.10.0.6 ↔ 10.10.0.10" .-> AMF_SMF
 
-    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.12" .-> UPF_Q
-    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.11" .-> UPF_G
-    AMF_SMF -. "N4: 10.30.0.10 ↔ 10.30.0.13" .-> UPF_I
+    AMF_SMF <-. "N4: 10.30.0.10 ↔ 10.30.0.12" .-> UPF_Q
+    AMF_SMF <-. "N4: 10.30.0.10 ↔ 10.30.0.11" .-> UPF_G
+    AMF_SMF <-. "N4: 10.30.0.10 ↔ 10.30.0.13" .-> UPF_I
 
-    UPF_Q -. "N6: 10.46.0.1" .-> Internet
-    UPF_G -. "N6: 10.45.0.1" .-> Internet
-    UPF_I -. "N6: 10.47.0.1" .-> Internet
+    UPF_Q <-- "N6: 10.46.0.1" --> Internet
+    UPF_G <-- "N6: 10.45.0.1" --> Internet
+    UPF_I <-- "N6: 10.47.0.1" --> Internet
 
     class UE_q,gNB_Q,UPF_Q quic;
     class UE_g,gNB_G,UPF_G gtpu;
     class UE_i,gNB_I,UPF_I ipsec;
 
-    %% Legend
     L_UE["📱 UE"] --- L_gNB["📡 gNB"] --- L_CORE["🧠 Core"] --- L_DP["🔁 Dataplane"] --- L_Internet["🌐 Internet"]

@@ -1,24 +1,24 @@
 flowchart LR
 
-    UE[UE]
+    UE[📱 UE]
 
    subgraph RAN["Radio Access Network (RAN)"]
-        gNB[gNB]
+        gNB[📡 gNB]
     end
 
-    subgraph 5GC["5G Core Network (5GC)"]
+    subgraph 5GC["🧠 5G Core Network (5GC)"]
         AMF[AMF]
         SMF[SMF]
         UPF[UPF]
     end
 
-    Internet((Internet))
+    Internet((🌐 Internet))
     
     UE -.->|N1| AMF
-    UE <-->|Nas| gNB
+    UE <--> gNB
     gNB <-->|N2| AMF
     AMF <-->|N11| SMF
     SMF <-->|N4| UPF
 
-    gNB <==>|N3 GTP-U + IPsec Tunnel| UPF
+    gNB <==>|🔁 N3 GTP-U Tunnel| UPF
     UPF <-->|N6| Internet
