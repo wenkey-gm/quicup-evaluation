@@ -21,6 +21,7 @@ typedef struct quic_client_node_s
     char ip_address[INET6_ADDRSTRLEN]; // The gNB's IP address
 } quic_client_node_t;
 
+ogs_hash_t *quic_client_hash = NULL;
 ogs_list_t quic_client_list;
 ogs_thread_mutex_t quic_client_mutex;
 OGS_POOL(quic_client_pool, quic_client_node_t);
@@ -40,6 +41,8 @@ QUIC_STATUS QUIC_API ListnerCallback(HQUIC Listener, void *Context, QUIC_LISTENE
 
 int ogs_quic_server_start(const char *bind_address)
 {
+
+    quic_client_hash = ogs_hash_make();
 
     ogs_list_init(&quic_client_list);
     ogs_thread_mutex_init(&quic_client_mutex);
@@ -177,6 +180,12 @@ void StopQuicServer(ogs_quic_context_t *ServerCtx)
         MsQuicClose(ctx->MsQuic);
         ctx->MsQuic = NULL;
 
+        if (quic_client_hash)
+        {
+            ogs_hash_destroy(quic_client_hash);
+            quic_client_hash = NULL;
+        }
+
         ogs_pool_final(&quic_send_pool);
         ogs_thread_mutex_destroy(&quic_pool_mutex);
 
@@ -194,14 +203,10 @@ void quic_server_send_downlink(const char *dest_gnb_ip, uint32_t teid, uint8_t *
     HQUIC target_connection = NULL;
 
     ogs_thread_mutex_lock(&quic_client_mutex);
-    quic_client_node_t *node = NULL;
-    ogs_list_for_each(&quic_client_list, node)
+    quic_client_node_t *node = ogs_hash_get(quic_client_hash, dest_gnb_ip, strlen(dest_gnb_ip));
+    if (node)
     {
-        if (strcmp(node->ip_address, dest_gnb_ip) == 0)
-        {
-            target_connection = node->conn;
-            break;
-        }
+        target_connection = node->conn;
     }
     ogs_thread_mutex_unlock(&quic_client_mutex);
 
@@ -217,13 +222,13 @@ void quic_server_send_downlink(const char *dest_gnb_ip, uint32_t teid, uint8_t *
         return;
     }
 
-    if (!packet_data || packet_len == 0)
+    const uint16_t header_len = sizeof(uint32_t);
+    if (!packet_data || packet_len == 0 || packet_len > (2048 - header_len))
     {
         ogs_warn("QUIC Downlink dropped: Invalid packet data.");
         return;
     }
 
-    const uint16_t header_len = sizeof(uint32_t);
     const uint16_t total_len = header_len + packet_len;
 
     ogs_quic_send_ctx_t *send_buffer = NULL;
@@ -319,6 +324,7 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void *Context, QUIC_CONNECTI
 
         ogs_thread_mutex_lock(&quic_client_mutex);
         ogs_list_add(&quic_client_list, node);
+        ogs_hash_set(quic_client_hash, node->ip_address, strlen(node->ip_address), node);
         ogs_thread_mutex_unlock(&quic_client_mutex);
 
         if (Event->CONNECTED.SessionResumed)
@@ -354,6 +360,7 @@ QUIC_STATUS QUIC_API ConnectionCallback(HQUIC Conn, void *Context, QUIC_CONNECTI
             if (node->conn == Conn)
             {
                 ogs_info("Removing gNB %s from active list.", node->ip_address);
+                ogs_hash_set(quic_client_hash, node->ip_address, strlen(node->ip_address), NULL);
                 ogs_list_remove(&quic_client_list, node);
                 ogs_pool_free(&quic_client_pool, node);
                 break;
