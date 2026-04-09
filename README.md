@@ -23,12 +23,12 @@ Containerized 5G network setup with QUICUP, GTP-U with IPSec and GTP-U using Ope
 - Docker Engine + Docker Compose v2
 - `iptables` and `iproute2` on the host
 
-## Installation
 
-### 1. Clone with submodules
+### Generate self-signed TLS certificate and key
 
 ```bash
-openssl req -x509 -newkey rsa:4096 -keyout server.key -out server.crt -days 365 -nodes -subj "/CN=localhost"
+mkdir -p config/secrets &&
+openssl req -x509 -newkey rsa:4096 -keyout config/secrets/server.key -out config/secrets/server.crt -days 365 -nodes -subj "/CN=localhost"
 ```
 
 ## Quick Start
