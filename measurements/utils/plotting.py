@@ -150,7 +150,35 @@ def plot_latency_comparison(
     ax.grid(True, which="major", linestyle="--", linewidth=0.5, alpha=0.7)
     ax.set_ylim(bottom=0)
 
-    plt.tight_layout()
+    protocols = list(palette.keys())
+    colors = list(palette.values())
+
+    # Calculate an offset for stacking multiple annotation boxes
+    y_offset = 0.95
+    for i, label in enumerate(protocols):
+        subset = combined.loc[combined["Protocol"] == label, "RTT (ms)"]
+        if subset.empty:
+            continue
+
+        ax.text(
+            1.02,
+            y_offset - (i * 0.15),
+            f"{label}:\n{_stats_annotation(subset)}",
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            fontsize=9,
+            fontfamily="monospace",
+            color=colors[i],
+            bbox=dict(
+                boxstyle="round,pad=0.3",
+                facecolor="white",
+                edgecolor=colors[i],
+                alpha=0.8
+            )
+        )
+
+    plt.subplots_adjust(right=0.82)
     path = output_dir / f"ping_latency_comparison_{timestamp}.png"
     plt.savefig(path, dpi=300, bbox_inches="tight")
     print(f"Saved plot : {path}")
