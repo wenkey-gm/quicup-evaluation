@@ -113,11 +113,17 @@ def plot_latency_comparison(
     timestamp: str,
     output_dir: Path,
 ) -> None:
-    frames = [
-        pd.DataFrame({"Protocol": label, "RTT (ms)": rtts})
-        for label, rtts in rtt_data.items()
-        if rtts
-    ]
+    frames = []
+    for label, rtts in rtt_data.items():
+        if not rtts:
+            continue
+        df = pd.DataFrame({
+            "Protocol": label,
+            "RTT (ms)": rtts,
+            "Sequence": range(len(rtts))
+        })
+        frames.append(df)
+
     if not frames:
         print("No ping data available — skipping latency plot")
         return
