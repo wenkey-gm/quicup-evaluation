@@ -133,43 +133,22 @@ def plot_latency_comparison(
     plt.figure(figsize=(13, 6))
     sns.set_theme(style="whitegrid", context="talk")
 
-    ax = sns.boxplot(
-        x="Protocol",
+    ax = sns.lineplot(
+        x="Sequence",
         y="RTT (ms)",
         hue="Protocol",
         data=combined,
-        width=0.4,
         palette=palette,
-        showfliers=True,
-        legend=False,
+        linewidth=2.5,
+        alpha=0.85
     )
 
-    plt.title("Network Latency \u2014 Ping RTT", fontsize=16, pad=20)
-    plt.xlabel("5G User Plane Protocol", fontsize=14)
+    plt.title("Network Latency Trend \u2014 Ping RTT", fontsize=16, pad=20)
+    plt.xlabel("Packet Sequence", fontsize=14)
     plt.ylabel("RTT (ms)", fontsize=14)
 
-    protocols = list(palette.keys())
-    colors = list(palette.values())
-    for x_pos, label in enumerate(protocols):
-        subset = combined.loc[combined["Protocol"] == label, "RTT (ms)"]
-        if subset.empty:
-            continue
-        ax.text(
-            x_pos + 0.28,
-            ax.get_ylim()[1],
-            _stats_annotation(subset),
-            va="top",
-            ha="left",
-            fontsize=10,
-            fontfamily="monospace",
-            color=colors[x_pos],
-            bbox=dict(
-                boxstyle="round,pad=0.4",
-                facecolor="white",
-                edgecolor=colors[x_pos],
-                alpha=0.85,
-            ),
-        )
+    ax.grid(True, which="major", linestyle="--", linewidth=0.5, alpha=0.7)
+    ax.set_ylim(bottom=0)
 
     plt.tight_layout()
     path = output_dir / f"ping_latency_comparison_{timestamp}.png"
