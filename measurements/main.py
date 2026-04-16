@@ -11,7 +11,7 @@ from core.iperf import (
     save_json_log,
 )
 from utils.docker_helpers import is_container_running
-from core.ping import collect_ping_rtt
+from core.ping import collect_ping_rtt, save_ping_log
 from utils.plotting import (
     plot_metric_comparisons,
     plot_latency_comparison,
@@ -155,32 +155,42 @@ def main() -> None:
 
         rtt_data: dict[str, list[float]] = {}
         palette: dict[str, str] = {}
+        time_series: dict[str, tuple[pd.DataFrame, str]] = {}
 
         for infile in args.input_file:
             try:
                 if "iperf" in selected_metrics:
                     ts = parse_iperf_json(file_path=infile, direction=args.direction)
-                    for k, v in ts.items():
-                        time_series[k] = v
-
-                    if time_series:
-                        plot_metric_comparisons(
-                            time_series, timestamp, current_out_dir, direction_label
-                        )
+                    for label, data in ts.items():
+                        unique_label = label
+                        if unique_label in time_series:
+                            unique_label = f"{label} ({infile.name})"
+                        time_series[unique_label] = data
 
                 if "ping" in selected_metrics:
                     parsed = parse_ping_txt_file(file_path=infile)
                     if parsed and parsed.get("rtts"):
                         label = parsed.get("profile") or parsed.get("file")
-                        rtt_data[label] = parsed.get("rtts")
+                        unique_label = label
+                        if unique_label in rtt_data:
+                            unique_label = f"{label} ({infile.name})"
+                        
+                        rtt_data[unique_label] = parsed.get("rtts")
                         if parsed.get("color"):
-                            palette[label] = parsed.get("color")
-                    if rtt_data:
-                        plot_latency_comparison(
-                            rtt_data, palette, timestamp, current_out_dir
-                        )
+                            palette[unique_label] = parsed.get("color")
+                        else:
+                            palette[unique_label] = "#808080" 
             except Exception as e:
                 print(f"Error processing {infile.name}: {e}")
+
+        if time_series:
+            plot_metric_comparisons(
+                time_series, timestamp, current_out_dir, direction_label
+            )
+        if rtt_data:
+            plot_latency_comparison(
+                rtt_data, palette, timestamp, current_out_dir
+            )
 
     elif needs_iperf:
         for key, profile in active_profiles.items():
@@ -226,10 +236,12 @@ def main() -> None:
                 if not is_container_running(profile.container):
                     print(f"{profile.container} not running — skipping ping")
                     continue
-                rtt_data[profile.label] = collect_ping_rtt(
-                    profile, count=args.ping_count
-                )
-                palette[profile.label] = profile.color
+                
+                rtts = collect_ping_rtt(profile, count=args.ping_count)
+                if rtts:
+                    save_ping_log(rtts, profile, current_out_dir)
+                    rtt_data[profile.label] = rtts
+                    palette[profile.label] = profile.color
 
             plot_latency_comparison(rtt_data, palette, timestamp, current_out_dir)
 
