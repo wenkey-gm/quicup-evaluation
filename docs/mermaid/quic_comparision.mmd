@@ -3,7 +3,7 @@ sequenceDiagram
     participant S as Server
 
     rect rgb(240, 240, 240)
-        Note over C, S: [HTTP/2] over TCP + TLS 1.3 (~3 RTTs)
+        Note over C, S: HTTP/2 Request over TCP + TLS 1.3 (~3 RTTs)
         C->>S: 1. TCP SYN
         S-->>C: 2. TCP SYN-ACK
         C->>S: 3. TLS Client Hello

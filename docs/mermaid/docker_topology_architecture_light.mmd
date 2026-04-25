@@ -1,0 +1,55 @@
+flowchart LR
+
+    classDef quic fill:#E8F7EC,stroke:#2E9B4B,stroke-width:2px,color:#114D22;
+    classDef gtpu fill:#E9F2FF,stroke:#2F6FDF,stroke-width:2px,color:#10356F;
+    classDef ipsec fill:#FDEBEC,stroke:#D64545,stroke-width:2px,color:#7A1E1E;
+
+    Internet(("🌐 Internet"))
+
+    UE_q["📱 ue-quic"]
+    UE_g["📱 ue-gtpu"]
+    UE_i["📱 ue-ipsec"]
+
+    gNB_Q["📡 gNB-Quic"]
+    gNB_G["📡 gNB-Gtpu"]
+    gNB_I["📡 gNB-Ipsec"]
+
+    AMF_SMF["🧠 Open5GS Core Functions"]
+    DB[(MongoDB)]
+    WebUI[open5gs-webui]
+    UPF_Q["🔁 UPF-Quic"]
+    UPF_G["🔁 UPF-Gtpu"]
+    UPF_I["🔁 UPF-Ipsec"]
+
+    UE_q <-- "N1" --> gNB_Q
+    UE_g <-- "N1" --> gNB_G
+    UE_i <-- "N1" --> gNB_I
+
+    gNB_Q <-- "N3" --> UPF_Q
+    gNB_G <-- "N3" --> UPF_G
+    gNB_I <-- "N3" --> UPF_I
+
+    DB
+    WebUI
+
+
+    WebUI <-- "DB_URI:mongodb" --> DB
+    AMF_SMF -. "DB_URI:mongodb" .-> DB
+
+    gNB_Q <-. "N2" .-> AMF_SMF
+    gNB_G <-. "N2" .-> AMF_SMF
+    gNB_I <-. "N2" .-> AMF_SMF
+
+    AMF_SMF <-. "N4" .-> UPF_Q
+    AMF_SMF <-. "N4" .-> UPF_G
+    AMF_SMF <-. "N4" .-> UPF_I
+
+    UPF_Q <-- "N6" --> Internet
+    UPF_G <-- "N6" --> Internet
+    UPF_I <-- "N6" --> Internet
+
+    class UE_q,gNB_Q,UPF_Q quic;
+    class UE_g,gNB_G,UPF_G gtpu;
+    class UE_i,gNB_I,UPF_I ipsec;
+
+    L_UE["📱 UE"] --- L_gNB["📡 gNB"] --- L_CORE["🧠 Core"] --- L_DP["🔁 Dataplane"] --- L_Internet["🌐 Internet"]
