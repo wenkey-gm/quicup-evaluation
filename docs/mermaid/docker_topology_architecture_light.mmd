@@ -34,7 +34,7 @@ flowchart LR
 
 
     WebUI <-- "DB_URI:mongodb" --> DB
-    AMF_SMF -. "DB_URI:mongodb" .-> DB
+    AMF_SMF <-. "DB_URI:mongodb" .-> DB
 
     gNB_Q <-. "N2" .-> AMF_SMF
     gNB_G <-. "N2" .-> AMF_SMF
