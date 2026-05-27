@@ -10,9 +10,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-quic
     restart: unless-stopped
@@ -38,9 +38,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-gtpu
     restart: unless-stopped
@@ -66,9 +66,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-quic
     privileged: true
     restart: unless-stopped
@@ -97,9 +97,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-gtpu
     privileged: true
     restart: unless-stopped
@@ -128,9 +128,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-gnb
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-gtpu-ipsec
     restart: unless-stopped
@@ -159,9 +159,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.ueransim
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-ueransim-ue
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-gtpu-ipsec
     privileged: true
     restart: unless-stopped

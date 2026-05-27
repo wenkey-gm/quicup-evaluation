@@ -41,9 +41,9 @@ services:
       dockerfile: ./config/docker/Dockerfile.open5gs.run
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     restart: unless-stopped
     networks:
       ogs_core_network:
@@ -80,7 +80,7 @@ services:
 
   upf-gtpu:
     profiles: ["gtpu"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu
     restart: unless-stopped
     networks:
@@ -111,7 +111,7 @@ services:
 
   upf-quic:
     profiles: ["quic"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-quic
     restart: unless-stopped
     networks:
@@ -142,7 +142,7 @@ services:
 
   upf-gtpu-ipsec:
     profiles: ["ipsec"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-open5gs-run
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu-ipsec
     restart: unless-stopped
     networks:

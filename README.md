@@ -40,7 +40,13 @@ git clone https://gitlab.cs.fau.de/qa75ruzo/quicup_project.git
 cd quicup_project
 ```
 
-1. Build base image:
+2. Create copy of `.env.example` and rename to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+3. Build base image:
 
 ```bash
 docker compose build base
@@ -292,12 +298,20 @@ flowchart LR
 
 Source file: [docs/mermaid/docker_topology_architecture.mmd](docs/mermaid/docker_topology_architecture.mmd)
 
-## References
+## 📚 References
 
-- [MSQUIC GitHub](https://github.com/microsoft/msquic)
-- [QUIC RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)
-- [3GPP TS 29.281 — GTP-U Protocol](https://www.3gpp.org/DynaReport/29281.htm)
-- [Open5GS Documentation](https://open5gs.org/open5gs/docs/)
-- [StrongSwan — IPsec for Linux](https://www.strongswan.org/)
-- [RFC 9221](https://www.rfc-editor.org/rfc/rfc9221.html)
-- [UERANSIM GitHub](https://github.com/aligungr/ueransim)
+This project is built upon and references the following standards, research, and open-source projects:
+
+### 📡 Standards & Protocols
+*   **[3GPP TS 29.281](https://www.3gpp.org/DynaReport/29281.htm)** — GPRS Tunnelling Protocol User Plane (GTPv1-U).
+*   **[RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)** — QUIC: A UDP-Based Multiplexed and Secure Transport.
+*   **[RFC 9221](https://www.rfc-editor.org/rfc/rfc9221.html)** — An Unreliable Datagram Extension to QUIC.
+
+### 🛠️ Open Source Frameworks
+*   **[Open5GS](https://open5gs.org/open5gs/docs/)** — Open-source implementation for 5G Core and EPC.
+*   **[UERANSIM](https://github.com/aligungr/ueransim)** — Open-source 5G UE and gNB (NR) simulator.
+*   **[MsQuic](https://github.com/microsoft/msquic)** — Microsoft's implementation of the IETF QUIC protocol.
+*   **[strongSwan](https://www.strongswan.org/)** — IPsec-based VPN solution for Linux.
+
+### 📖 Research & Publications
+*   **QUICUP:** Wernet, L., et al. (2025). *QUICUP: Secure User Plane Tunneling for Cellular Networks*. Proc. of the 50th Annual IEEE Conference on Local Computer Networks (LCN). [DOI: 10.1109/LCN65610.2025.11146319](https://doi.org/10.1109/LCN65610.2025.11146319)

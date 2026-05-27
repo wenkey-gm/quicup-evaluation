@@ -6,7 +6,7 @@ services:
       dockerfile: ./config/docker/Dockerfile.base
       args:
         dist: ${DIST-ubuntu}
-        tag: ${TAG-latest}
+        tag: ${TAG-24.04}
         username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-latest}-base
+    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-base
     container_name: quicup-project-ubuntu-base
