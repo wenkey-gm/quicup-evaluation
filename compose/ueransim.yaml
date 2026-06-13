@@ -4,7 +4,6 @@ services:
       run:
         condition: service_started
     profiles: ["quic"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -25,14 +24,16 @@ services:
         ipv4_address: 10.10.0.4
     volumes:
       - ../config/ueransim/open5gs-gnb-quic.yaml:/ueransim/config/open5gs-gnb.yaml:Z
-    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 10 &&
+      build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-gnb-gtpu:
     depends_on:
       run:
         condition: service_started
     profiles: ["gtpu"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -53,14 +54,16 @@ services:
         ipv4_address: 10.10.0.5
     volumes:
       - ../config/ueransim/open5gs-gnb-gtpu.yaml:/ueransim/config/open5gs-gnb.yaml:Z
-    command: /bin/bash -c "sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 10 &&
+      build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-ue-quic:
     depends_on:
       ueransim-gnb-quic:
         condition: service_started
     profiles: ["quic"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -77,8 +80,9 @@ services:
         ipv4_address: 10.20.0.16
     volumes:
       - ../config/ueransim/open5gs-ue-quic.yaml:/ueransim/config/open5gs-ue.yaml:Z
-    command: /bin/bash -c "
-      sleep 15 &&
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
       ip route del default via 10.20.0.1 2>/dev/null || true;
@@ -91,7 +95,6 @@ services:
       ueransim-gnb-gtpu:
         condition: service_started
     profiles: ["gtpu"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -108,21 +111,20 @@ services:
         ipv4_address: 10.20.0.17
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu.yaml:/ueransim/config/open5gs-ue.yaml:Z
-    command: /bin/bash -c "
-      sleep 15 &&
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
       ip route del default via 10.20.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
-      wait
-      "
+      wait"
 
   ueransim-gnb-gtpu-ipsec:
     depends_on:
       run:
         condition: service_started
     profiles: ["ipsec"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -146,14 +148,17 @@ services:
       - ../ipsec:/ipsec:Z
     environment:
       - IPSEC=true
-    command: /bin/bash -c "sleep 10 && /ipsec/ipsec_setup.sh gnb_ipsec_gtpu.conf && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 10  &&
+      /ipsec/ipsec_setup.sh gnb_ipsec_gtpu.conf  &&
+      build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml"
 
   ueransim-ue-gtpu-ipsec:
     depends_on:
       ueransim-gnb-gtpu-ipsec:
         condition: service_started
     profiles: ["ipsec"]
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.ueransim
@@ -170,14 +175,14 @@ services:
         ipv4_address: 10.20.0.18
     volumes:
       - ../config/ueransim/open5gs-ue-gtpu-ipsec.yaml:/ueransim/config/open5gs-ue.yaml:Z
-    command: /bin/bash -c "
-      sleep 15 &&
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "sleep 15 &&
       build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
       until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
       ip route del default via 10.20.0.1 2>/dev/null || true;
       ip route add default dev uesimtun0;
-      wait
-      "
+      wait"
 
 networks:
   shared_network: {}
