@@ -7,6 +7,5 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-base
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-base
     container_name: quicup-project-ubuntu-base

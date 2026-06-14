@@ -10,8 +10,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-quic
     restart: unless-stopped
@@ -40,8 +40,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-gtpu
     restart: unless-stopped
@@ -70,8 +70,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-quic
     privileged: true
     restart: unless-stopped
@@ -101,8 +101,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-gtpu
     privileged: true
     restart: unless-stopped
@@ -131,8 +131,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-gnb
     privileged: true
     container_name: ueransim-gnb-gtpu-ipsec
     restart: unless-stopped
@@ -165,8 +165,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-ueransim-ue
     container_name: ueransim-ue-gtpu-ipsec
     privileged: true
     restart: unless-stopped

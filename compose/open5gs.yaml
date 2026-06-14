@@ -19,7 +19,7 @@ services:
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.open5gs.webui
-    image: ${USER}/open5gs-webui
+    image: ${REGISTRY-localhost:5001}/open5gs-webui
     container_name: open5gs-webui
     restart: unless-stopped
     networks:
@@ -41,8 +41,8 @@ services:
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     restart: unless-stopped
     networks:
       ogs_core_network:
@@ -80,7 +80,7 @@ services:
 
   upf-gtpu:
     profiles: ["gtpu"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu
     restart: unless-stopped
     networks:
@@ -111,7 +111,7 @@ services:
 
   upf-quic:
     profiles: ["quic"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-quic
     restart: unless-stopped
     networks:
@@ -142,7 +142,7 @@ services:
 
   upf-gtpu-ipsec:
     profiles: ["ipsec"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu-ipsec
     restart: unless-stopped
     networks:
