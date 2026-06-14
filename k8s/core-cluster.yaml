@@ -1,0 +1,65 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: phonson-cluster
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-services,ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 38412
+        hostPort: 38412
+        protocol: TCP
+    extraMounts:
+      - hostPath: ../config/open5gs/services
+        containerPath: /usr/local/etc/open5gs
+        selinuxRelabel: true
+      - hostPath: ../config/secrets
+        containerPath: /secrets
+        selinuxRelabel: true
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-subscriber-db"
+    extraMounts:
+      - hostPath: ../config/open5gs/mongo/mongo-init.js
+        containerPath: /docker-entrypoint-initdb.d/mongo-init.js
+        selinuxRelabel: true
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-gtpu-upf"
+    extraPortMappings:
+      - containerPort: 2152
+        hostPort: 2152
+        protocol: UDP
+    extraMounts:
+      - hostPath: ../config/open5gs/services
+        containerPath: /usr/local/etc/open5gs
+        selinuxRelabel: true
+      - hostPath: ../config/secrets
+        containerPath: /secrets
+        selinuxRelabel: true
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-webui"
+    extraPortMappings:
+      - containerPort: 9999
+        hostPort: 9999
+        protocol: TCP
