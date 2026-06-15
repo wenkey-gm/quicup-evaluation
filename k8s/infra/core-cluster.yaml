@@ -1,6 +1,10 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: phonson-cluster
+containerdConfigPatches:
+  - |
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]
 nodes:
   - role: control-plane
     kubeadmConfigPatches:
@@ -24,6 +28,8 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "tier=open5gs-services"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
+
     extraPortMappings:
       - containerPort: 38412
         hostPort: 38412
@@ -44,6 +50,7 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "tier=open5gs-gtpu-upf"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
     extraPortMappings:
       - containerPort: 2152
         hostPort: 2152
