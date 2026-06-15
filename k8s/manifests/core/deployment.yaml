@@ -1,0 +1,245 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: open5gs-mongodb
+spec:
+  serviceName: open5gs-mongodb-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-mongodb
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: open5gs-mongodb
+    spec:
+      nodeSelector:
+        tier: open5gs-subscriber-db
+      containers:
+        - name: open5gs-mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          command: ["mongod", "--bind_ip", "0.0.0.0", "--port", "27017"]
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: "open5gs"
+          volumeMounts:
+            - name: mongo-persistent-storage
+              mountPath: /data/db
+            - name: mongo-init-vol
+              mountPath: /docker-entrypoint-initdb.d/mongo-init.js
+              subPath: mongo-init.js
+      volumes:
+        - name: mongo-init-vol
+          configMap:
+            name: open5gs-mongodb-config
+  volumeClaimTemplates:
+    - metadata:
+        name: mongo-persistent-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-webui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-webui
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: open5gs-webui
+    spec:
+      nodeSelector:
+        tier: open5gs-webui
+      containers:
+        - name: open5gs-webui
+          image: open5gs-webui:latest
+          ports:
+            - containerPort: 9999
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          env:
+            - name: DB_URI
+              value: "mongodb://open5gs-mongodb-svc:27017/open5gs"
+            - name: WAIT_HOSTS
+              value: "open5gs-mongodb-svc:27017"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-core
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: open5gs-core
+    spec:
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+      nodeSelector:
+        tier: open5gs-services
+      containers:
+        - name: open5gs-core
+          image: open5gs-run:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 38412
+          env:
+            - name: DB_URI
+              value: mongodb://open5gs-mongodb-svc:27017/open5gs
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              /wait &&
+              open5gs-nrfd -D && sleep 2 &&
+              open5gs-scpd -D && sleep 2 &&
+              open5gs-amfd -D &&
+              open5gs-smfd -D &&
+              open5gs-ausfd -D &&
+              open5gs-udmd -D &&
+              open5gs-pcfd -D &&
+              open5gs-nssfd -D &&
+              open5gs-bsfd -D &&
+              open5gs-udrd -D &&
+              sleep infinity
+          volumeMounts:
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/amf.yaml
+              subPath: amf.yaml
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/smf.yaml
+              subPath: smf.yaml
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/upf-gtpu.yaml
+              subPath: upf-gtpu.yaml
+            - name: open5gs-core-secrets-vol
+              mountPath: /secrets
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+      volumes:
+        - name: open5gs-core-config-vol
+          configMap:
+            name: open5gs-core-config
+        - name: open5gs-core-secrets-vol
+          secret:
+            secretName: open5gs-core-secrets
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf-gtpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-upf-gtpu
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: open5gs-upf-gtpu
+    spec:
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+      nodeSelector:
+        tier: open5gs-gtpu-upf
+      containers:
+        - name: open5gs-gtpu-upf
+          image: open5gs-run:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 2152
+              protocol: UDP
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              ip tuntap add name ogstun mode tun 2>/dev/null || true &&
+              ip addr del 10.45.0.1/16 dev ogstun 2>/dev/null || true &&
+              ip addr add 10.45.0.1/16 dev ogstun &&
+              ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
+              ip addr add 2001:db8:cafe::1/48 dev ogstun &&
+              ip link set ogstun up &&
+              iperf3 -s -B 10.45.0.1 --json -D &&
+              open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
+
+          volumeMounts:
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/amf.yaml
+              subPath: amf.yaml
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/smf.yaml
+              subPath: smf.yaml
+            - name: open5gs-core-config-vol
+              mountPath: /usr/local/etc/open5gs/upf-gtpu.yaml
+              subPath: upf-gtpu.yaml
+            - name: open5gs-core-secrets-vol
+              mountPath: /secrets
+      volumes:
+        - name: open5gs-core-config-vol
+          configMap:
+            name: open5gs-core-config
+        - name: open5gs-core-secrets-vol
+          secret:
+            secretName: open5gs-core-secrets

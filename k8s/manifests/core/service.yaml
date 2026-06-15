@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-mongodb-svc
+  labels:
+    app: open5gs-mongodb
+spec:
+  type: ClusterIP
+  selector:
+    app: open5gs-mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-webui-svc
+  labels:
+    app: open5gs-webui
+spec:
+  type: ClusterIP
+  selector:
+    app: open5gs-webui
+  ports:
+    - protocol: TCP
+      port: 9999
+      targetPort: 9999
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-core-svc
+  labels:
+    app: open5gs-core
+spec:
+  type: ClusterIP
+  selector:
+    app: open5gs-core
+  ports:
+    - protocol: SCTP
+      port: 38412
+      targetPort: 38412
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open5gs-upf-svc
+  labels:
+    app: open5gs-upf-gtpu
+spec:
+  type: ClusterIP
+  selector:
+    app: open5gs-upf-gtpu
+  ports:
+    - protocol: UDP
+      port: 2152
+      targetPort: 2152
