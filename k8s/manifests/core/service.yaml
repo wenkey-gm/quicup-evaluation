@@ -20,13 +20,14 @@ metadata:
   labels:
     app: open5gs-webui
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: open5gs-webui
   ports:
     - protocol: TCP
       port: 9999
       targetPort: 9999
+      nodePort: 30080
 
 ---
 apiVersion: v1

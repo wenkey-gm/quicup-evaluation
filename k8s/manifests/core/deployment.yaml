@@ -29,7 +29,7 @@ spec:
             limits:
               memory: "2Gi"
               cpu: "2000m"
-          command: ["mongod", "--bind_ip", "0.0.0.0", "--port", "27017"]
+          args: ["--bind_ip", "0.0.0.0", "--port", "27017"]
           env:
             - name: MONGO_INITDB_DATABASE
               value: "open5gs"

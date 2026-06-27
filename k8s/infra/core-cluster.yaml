@@ -64,6 +64,7 @@ nodes:
           kubeletExtraArgs:
             node-labels: "tier=open5gs-webui"
     extraPortMappings:
-      - containerPort: 9999
-        hostPort: 9999
+      - containerPort: 30080
+        hostPort: 30080
+        listenAddress: "127.0.0.1"
         protocol: TCP
