@@ -103,6 +103,15 @@ spec:
   minReadySeconds: 10
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "open5gs-upf-n4",
+              "interface": "net1",
+              "ips": ["10.10.0.3/24"]
+            }
+          ]
       labels:
         app: open5gs-core
     spec:
@@ -183,7 +192,18 @@ spec:
   template:
     metadata:
       annotations:
-        k8s.v1.cni.cncf.io/networks: open5gs-upf-n4@net1,open5gs-upf-n3@net2
+        k8s.v1.cni.cncf.io/networks: '[
+          {
+          "name": "open5gs-upf-n4",
+          "interface": "net1",
+          "ips": ["10.10.0.2/24"]
+          },
+          {
+          "name": "open5gs-upf-n3",
+          "interface": "net2",
+          "ips": ["10.30.0.2/24"]
+          }
+          ]'
       labels:
         app: open5gs-upf-gtpu
     spec:

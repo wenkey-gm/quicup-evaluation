@@ -10,8 +10,7 @@ spec:
       "master": "eth0",
       "mode": "bridge",
       "ipam": {
-        "type": "host-local",
-        "subnet": "10.30.0.0/24"
+        "type": "static"
       }
     }
 
@@ -28,7 +27,6 @@ spec:
       "master": "eth0",
       "mode": "bridge",
       "ipam": {
-        "type": "host-local",
-        "subnet": "10.10.0.0/24"
+        "type": "static"
       }
     }
