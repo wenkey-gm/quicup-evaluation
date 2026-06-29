@@ -154,9 +154,6 @@ spec:
             - name: open5gs-core-config-vol
               mountPath: /usr/local/etc/open5gs/smf.yaml
               subPath: smf.yaml
-            - name: open5gs-core-config-vol
-              mountPath: /usr/local/etc/open5gs/upf-gtpu.yaml
-              subPath: upf-gtpu.yaml
             - name: open5gs-core-secrets-vol
               mountPath: /secrets
             - name: dev-net-tun
@@ -185,6 +182,8 @@ spec:
   minReadySeconds: 10
   template:
     metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: open5gs-upf-n4@net1,open5gs-upf-n3@net2
       labels:
         app: open5gs-upf-gtpu
     spec:
@@ -225,21 +224,15 @@ spec:
               open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
 
           volumeMounts:
-            - name: open5gs-core-config-vol
-              mountPath: /usr/local/etc/open5gs/amf.yaml
-              subPath: amf.yaml
-            - name: open5gs-core-config-vol
-              mountPath: /usr/local/etc/open5gs/smf.yaml
-              subPath: smf.yaml
-            - name: open5gs-core-config-vol
+            - name: open5gs-upf-config-vol
               mountPath: /usr/local/etc/open5gs/upf-gtpu.yaml
               subPath: upf-gtpu.yaml
             - name: open5gs-core-secrets-vol
               mountPath: /secrets
       volumes:
-        - name: open5gs-core-config-vol
+        - name: open5gs-upf-config-vol
           configMap:
-            name: open5gs-core-config
+            name: open5gs-upf-config
         - name: open5gs-core-secrets-vol
           secret:
             secretName: open5gs-core-secrets

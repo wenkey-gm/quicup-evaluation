@@ -20,6 +20,9 @@ nodes:
       - containerPort: 443
         hostPort: 443
         protocol: TCP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -34,6 +37,9 @@ nodes:
       - containerPort: 38412
         hostPort: 38412
         protocol: SCTP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -42,6 +48,9 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "tier=open5gs-subscriber-db"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -55,6 +64,9 @@ nodes:
       - containerPort: 2152
         hostPort: 2152
         protocol: UDP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -68,3 +80,6 @@ nodes:
         hostPort: 30080
         listenAddress: "127.0.0.1"
         protocol: TCP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/

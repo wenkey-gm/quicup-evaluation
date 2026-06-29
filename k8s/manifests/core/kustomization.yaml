@@ -4,19 +4,21 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - ingress.yaml
+  - nads/multus_nad.yaml
 
-# Generates ConfigMaps for the Core Cluster
 configMapGenerator:
   - name: open5gs-core-config
     files:
       - configs/services/amf.yaml
       - configs/services/smf.yaml
-      - configs/services/upf-gtpu.yaml
 
   - name: open5gs-mongodb-config
     files:
       - configs/mongo/mongo-init.js
+
+  - name: open5gs-upf-config
+    files:
+      - configs/services/upf-gtpu.yaml
 
 secretGenerator:
   - name: open5gs-core-secrets
