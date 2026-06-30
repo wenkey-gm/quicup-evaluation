@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-gnb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-gnb
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-gnb
+    spec:
+      containers:
+        - name: ueransim-gnb-gtpu
+          image: ueransim-gnb:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          ports:
+            - containerPort: 38412
+              protocol: SCTP
+            - containerPort: 2152
+              protocol: UDP
+          volumeMounts:
+            - name: gnb-config-vol
+              mountPath: /ueransim/config/open5gs-gnb.yaml
+              subPath: open5gs-gnb-gtpu.yaml
+      volumes:
+        - name: gnb-config-vol
+          configMap:
+            name: ueransim-gnb-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-ue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-ue
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-ue
+    spec:
+      containers:
+        - name: ueransim-ue-gtpu
+          image: ueransim-ue:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          volumeMounts:
+            - name: ue-config-vol
+              mountPath: /ueransim/config/open5gs-ue.yaml
+              subPath: open5gs-ue-gtpu.yaml
+      volumes:
+        - name: ue-config-vol
+          configMap:
+            name: ueransim-ue-config

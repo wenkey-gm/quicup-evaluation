@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-service
+  labels:
+    app: hello-kubernates
+spec:
+  type: ClusterIP
+  selector:
+    app: hello-kubernates
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
