@@ -57,7 +57,8 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/amf.yaml:/usr/local/etc/open5gs/amf.yaml:Z
+      - ../config/open5gs/services/smf.yaml:/usr/local/etc/open5gs/smf.yaml:Z
       - ../config/secrets:/secrets:Z
     environment:
       - DB_URI=mongodb://10.30.0.2:27018/open5gs
@@ -95,7 +96,7 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-gtpu.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../config/secrets:/secrets:Z
     entrypoint: ["/bin/bash", "-c"]
     command: >
@@ -107,7 +108,7 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       iperf3 -s -B 10.45.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml"
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
   upf-quic:
     profiles: ["quic"]
@@ -126,7 +127,7 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-quic.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../config/secrets:/secrets:Z
     entrypoint: ["/bin/bash", "-c"]
     command: >-
@@ -138,7 +139,7 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       iperf3 -s -B 10.46.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml"
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
   upf-gtpu-ipsec:
     profiles: ["ipsec"]
@@ -157,7 +158,7 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-gtpu-ipsec.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../ipsec:/ipsec:Z
     environment:
       - IPSEC=true
@@ -172,7 +173,7 @@ services:
       ip link set ogstun up &&
       /ipsec/ipsec_setup.sh upf_ipsec_gtpu.conf &&
       iperf3 -s -B 10.47.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml"
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
 volumes:
   mongodb: {}
