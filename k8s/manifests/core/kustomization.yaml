@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - nads/multus_nad.yaml
+  - ../nads
 
 configMapGenerator:
   - name: open5gs-core-config
@@ -23,8 +23,8 @@ configMapGenerator:
 secretGenerator:
   - name: open5gs-core-secrets
     files:
-      - tls.key=secrets/server.key
-      - tls.crt=secrets/server.crt
+      - server.key=secrets/server.key
+      - server.crt=secrets/server.crt
 
 images:
   - name: open5gs-webui

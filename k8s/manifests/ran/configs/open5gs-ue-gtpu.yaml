@@ -31,7 +31,7 @@ tunNetmask: "255.255.255.0"
 
 # List of gNB IP addresses for Radio Link Simulation
 gnbSearchList:
-  - 10.20.0.5
+  - 10.50.0.3
 
 # UAC Access Identities Configuration
 uacAic:

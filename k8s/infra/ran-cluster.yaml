@@ -10,6 +10,9 @@ nodes:
     kubeadmConfigPatches:
       - |
         kind: InitConfiguration
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -18,6 +21,9 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "tier=ueransim-gnb"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
 
   - role: worker
     kubeadmConfigPatches:
@@ -26,3 +32,6 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "tier=ueransim-ue"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/

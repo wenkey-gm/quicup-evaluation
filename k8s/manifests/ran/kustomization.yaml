@@ -2,17 +2,17 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ueransim-deployments.yaml
+  - deployment.yaml
+  - ../nads
 
-# Generates ConfigMaps for the RAN Cluster
 configMapGenerator:
   - name: ueransim-gnb-config
     files:
-      - ../../../config/ueransim/open5gs-gnb-gtpu.yaml
+      - configs/open5gs-gnb-gtpu.yaml
 
   - name: ueransim-ue-config
     files:
-      - ../../../config/ueransim/open5gs-ue-gtpu.yaml
+      - configs/open5gs-ue-gtpu.yaml
 
 images:
   - name: ueransim-gnb

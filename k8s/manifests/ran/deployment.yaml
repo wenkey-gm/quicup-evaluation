@@ -12,6 +12,25 @@ spec:
     metadata:
       labels:
         app: ueransim-gnb
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "n2-bridge",
+              "interface": "net1",
+              "ips": ["10.40.0.3/24"]
+            },
+            {
+              "name": "open5gs-upf-n3",
+              "interface": "net2",
+              "ips": ["10.30.0.3/24"]
+            },
+            {
+              "name": "ueransim-ue",
+              "interface": "net3",
+              "ips": ["10.50.0.3/24"]
+            }
+          ]
     spec:
       containers:
         - name: ueransim-gnb-gtpu
@@ -25,12 +44,17 @@ spec:
               cpu: "2000m"
           securityContext:
             capabilities:
-              add: ["NET_ADMIN"]
+              add:
+                - "NET_ADMIN"
           ports:
             - containerPort: 38412
               protocol: SCTP
             - containerPort: 2152
               protocol: UDP
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml
           volumeMounts:
             - name: gnb-config-vol
               mountPath: /ueransim/config/open5gs-gnb.yaml
@@ -55,6 +79,15 @@ spec:
     metadata:
       labels:
         app: ueransim-ue
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "ueransim-ue",
+              "interface": "net1",
+              "ips": ["10.50.0.10/24"]
+            },
+          ]
     spec:
       containers:
         - name: ueransim-ue-gtpu
@@ -67,13 +100,29 @@ spec:
               memory: "2Gi"
               cpu: "2000m"
           securityContext:
+            privileged: true
             capabilities:
-              add: ["NET_ADMIN"]
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 15 &&
+              build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+              until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+              ip route del default 2>/dev/null || true;
+              ip route add default dev uesimtun0;
+              wait
           volumeMounts:
             - name: ue-config-vol
               mountPath: /ueransim/config/open5gs-ue.yaml
               subPath: open5gs-ue-gtpu.yaml
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
       volumes:
         - name: ue-config-vol
           configMap:
             name: ueransim-ue-config
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun

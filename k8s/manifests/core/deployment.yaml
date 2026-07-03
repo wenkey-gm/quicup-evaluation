@@ -110,7 +110,12 @@ spec:
               "name": "open5gs-upf-n4",
               "interface": "net1",
               "ips": ["10.10.0.3/24"]
-            }
+            },
+            {
+              "name": "n2-bridge",
+              "interface": "net2",
+              "ips": ["10.40.0.2/24"]
+            },
           ]
       labels:
         app: open5gs-core
@@ -136,6 +141,8 @@ spec:
           env:
             - name: DB_URI
               value: mongodb://open5gs-mongodb-svc:27017/open5gs
+            - name: WAIT_HOSTS
+              value: open5gs-mongodb-svc:27017
           securityContext:
             privileged: true
             capabilities:
@@ -165,8 +172,6 @@ spec:
               subPath: smf.yaml
             - name: open5gs-core-secrets-vol
               mountPath: /secrets
-            - name: dev-net-tun
-              mountPath: /dev/net/tun
       volumes:
         - name: open5gs-core-config-vol
           configMap:
@@ -174,9 +179,6 @@ spec:
         - name: open5gs-core-secrets-vol
           secret:
             secretName: open5gs-core-secrets
-        - name: dev-net-tun
-          hostPath:
-            path: /dev/net/tun
 
 ---
 apiVersion: apps/v1
@@ -249,6 +251,8 @@ spec:
               subPath: upf-gtpu.yaml
             - name: open5gs-core-secrets-vol
               mountPath: /secrets
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
       volumes:
         - name: open5gs-upf-config-vol
           configMap:
@@ -256,3 +260,6 @@ spec:
         - name: open5gs-core-secrets-vol
           secret:
             secretName: open5gs-core-secrets
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
