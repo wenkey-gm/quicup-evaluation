@@ -9,3 +9,11 @@ configMapGenerator:
   - name: open5gs-upf-config
     files:
       - configs/upf-gtpu.yaml
+
+images:
+  - name: open5gs-webui
+    newName: localhost:5001/open5gs-webui
+    newTag: latest
+  - name: open5gs-run
+    newName: localhost:5001/ubuntu-24.04-open5gs-run
+    newTag: latest

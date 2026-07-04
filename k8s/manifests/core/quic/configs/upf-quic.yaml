@@ -18,13 +18,13 @@ upf:
 
   transport_mode: quic
   quic:
-    address: 10.30.0.4
+    address: 10.70.0.4
     cert: /secrets/server.crt
     key: /secrets/server.key
 
   gtpu:
     server:
-      - address: 10.30.0.4
+      - address: 10.70.0.4  
 
   session:
     - subnet: 10.46.0.0/16

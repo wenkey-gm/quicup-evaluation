@@ -2,8 +2,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ../shared
   - deployment.yaml
+  - ../../nads
 
 configMapGenerator:
   - name: ueransim-gnb-config
@@ -13,3 +13,11 @@ configMapGenerator:
   - name: ueransim-ue-config
     files:
       - open5gs-ue.yaml=configs/open5gs-ue-quic.yaml
+
+images:
+  - name: ueransim-gnb
+    newName: localhost:5001/ubuntu-24.04-ueransim-gnb
+    newTag: latest
+  - name: ueransim-ue
+    newName: localhost:5001/ubuntu-24.04-ueransim-ue
+    newTag: latest
