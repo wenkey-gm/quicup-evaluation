@@ -4,7 +4,7 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - ../nads
+  - ../../nads
 
 configMapGenerator:
   - name: open5gs-core-config
@@ -15,10 +15,6 @@ configMapGenerator:
   - name: open5gs-mongodb-config
     files:
       - configs/mongo/mongo-init.js
-
-  - name: open5gs-upf-config
-    files:
-      - configs/services/upf-gtpu.yaml
 
 secretGenerator:
   - name: open5gs-core-secrets

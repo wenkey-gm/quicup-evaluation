@@ -74,6 +74,22 @@ nodes:
         kind: JoinConfiguration
         nodeRegistration:
           kubeletExtraArgs:
+            node-labels: "tier=open5gs-quic-upf"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
+    extraPortMappings:
+      - containerPort: 2152
+        hostPort: 2152
+        protocol: UDP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
             node-labels: "tier=open5gs-webui"
     extraPortMappings:
       - containerPort: 30080

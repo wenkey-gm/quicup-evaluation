@@ -20,7 +20,7 @@ nodes:
         kind: JoinConfiguration
         nodeRegistration:
           kubeletExtraArgs:
-            node-labels: "tier=ueransim-gnb"
+            node-labels: "tier=ueransim-gnb-gtpu"
     extraMounts:
       - hostPath: /usr/libexec/cni/
         containerPath: /opt/cni/bin/
@@ -31,7 +31,29 @@ nodes:
         kind: JoinConfiguration
         nodeRegistration:
           kubeletExtraArgs:
-            node-labels: "tier=ueransim-ue"
+            node-labels: "tier=ueransim-ue-gtpu"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=ueransim-gnb-quic"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=ueransim-ue-quic"
     extraMounts:
       - hostPath: /usr/libexec/cni/
         containerPath: /opt/cni/bin/

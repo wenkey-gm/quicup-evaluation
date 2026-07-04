@@ -25,8 +25,8 @@ smf:
       upf:
         - address: 10.10.0.2
           dnn: internet
-        # - address: 10.30.0.12
-        #   dnn: quic-net
+        - address: 10.10.0.4
+          dnn: quic-net
         # - address: 10.30.0.13
         #   dnn: ipsec-net
   gtpc:
@@ -43,9 +43,9 @@ smf:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
       dnn: internet
-    # - subnet: 10.46.0.0/16
-    #   gateway: 10.46.0.1
-    #   dnn: quic-net
+    - subnet: 10.46.0.0/16
+      gateway: 10.46.0.1
+      dnn: quic-net
     # - subnet: 10.47.0.0/16
     #   gateway: 10.47.0.1
     #   dnn: ipsec-net
