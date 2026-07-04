@@ -115,7 +115,7 @@ spec:
               "name": "n2-bridge",
               "interface": "net2",
               "ips": ["10.40.0.2/24"]
-            },
+            }
           ]
       labels:
         app: open5gs-core

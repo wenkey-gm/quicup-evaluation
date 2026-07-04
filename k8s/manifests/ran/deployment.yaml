@@ -86,7 +86,7 @@ spec:
               "name": "ueransim-ue",
               "interface": "net1",
               "ips": ["10.50.0.10/24"]
-            },
+            }
           ]
     spec:
       containers:
