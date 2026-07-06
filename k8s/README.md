@@ -74,8 +74,8 @@ openssl req -x509 -newkey rsa:4096 -keyout k8s/charts/quicup/core/secrets/server
 ### 4. Deploy Network Attachment Definitions (Nads)
 Deploy the Multus CNI network configurations on **both** clusters:
 ```bash
-helm install network k8s/charts/quicup/network --context kind-phonso-core
-helm install network k8s/charts/quicup/network --context kind-phonto-ran
+helm install network k8s/charts/quicup/network
+helm install network k8s/charts/quicup/network
 ```
 
 ### 5. Deploy Open5GS Core
