@@ -91,17 +91,7 @@ Install the gNodeB and UE simulators on the RAN cluster:
 helm install ran k8s/charts/quicup/ran --context kind-phonto-ran
 ```
 
-### 7. Enable Public Internet (N6) Routing (Required for Internet access)
-By default, traffic reaching the UPF's virtual `ogstun` interface cannot reach the public internet because the outer pod network doesn't route the UE private subnets. You must enable NAT (masquerading) inside the UPF containers:
-```bash
-# Enable NAT inside the GTP-U UPF pod
-kubectl exec -it $(kubectl get pods --context kind-phonso-core -l app=open5gs-upf-gtpu -o jsonpath='{.items[0].metadata.name}') --context kind-phonso-core -- iptables -t nat -A POSTROUTING -s 10.45.0.0/16 -o eth0 -j MASQUERADE
-
-# Enable NAT inside the QUIC UPF pod
-kubectl exec -it $(kubectl get pods --context kind-phonso-core -l app=open5gs-upf-quic -o jsonpath='{.items[0].metadata.name}') --context kind-phonso-core -- iptables -t nat -A POSTROUTING -s 10.46.0.0/16 -o eth0 -j MASQUERADE
-```
-
-### 8. Deployment Profile Options (GTP-U or QUIC Only)
+### 7. Deployment Profile Options (GTP-U or QUIC Only)
 By default, the core and RAN charts deploy both GTP-U and QUIC tunnels in parallel. You can disable one of them using Helm values overrides:
 
 * **To run GTP-U only:**
