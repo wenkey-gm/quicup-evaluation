@@ -4,7 +4,7 @@ This document provides a detailed walkthrough for deploying, managing, and troub
 
 ---
 
-## 🏗️ Architecture Design
+## Architecture Design
 
 The Kubernetes deployment simulates a distributed 5G network by splitting the core and radio nodes across two separate **Kind (Kubernetes-in-Docker)** clusters. Communication between clusters is bridged at the host network layer using **Multus CNI** with **macvlan** plugins.
 
@@ -44,7 +44,7 @@ flowchart TD
 
 ---
 
-## 🚀 Deployment Steps
+## Deployment Steps
 
 ### 1. Host Prerequisites
 Ensure CNI plugins (specifically `macvlan`) are installed on your Fedora/Ubuntu host:
@@ -118,7 +118,7 @@ By default, the core and RAN charts deploy both GTP-U and QUIC tunnels in parall
 
 ---
 
-## 🔍 Verification & Testing
+## Verification & Testing
 
 ### 1. Check Pod Health
 Ensure all pods in both clusters are healthy and in the `Running` state:
@@ -153,7 +153,7 @@ kubectl exec -it <ue-gtpu-pod-name> --context kind-phonto-ran -- ping -c 5 -I ue
 
 ---
 
-## 🔄 Managing Deployments (Upgrade & Uninstall)
+## Managing Deployments (Upgrade & Uninstall)
 
 To manage the lifecycle of your Helm deployments, use the following commands:
 
@@ -187,7 +187,7 @@ helm uninstall network --context kind-phonto-ran
 
 ---
 
-## 🛠️ Troubleshooting & Technical Insights
+## Troubleshooting & Technical Insights
 
 During development and testing, several subtle issues were encountered and resolved. These are documented below for cloud-native research reference:
 

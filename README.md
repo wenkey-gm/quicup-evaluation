@@ -237,7 +237,7 @@ helm install core k8s/charts/quicup/core
 helm install ran k8s/charts/quicup/ran
 ```
 
-*Note: To run GTP-U or QUIC exclusively, pass `--set quic.enabled=false` or `--set gtpu.enabled=false` overrides to your `core` and `ran` Helm commands (details in the [Kubernetes Setup Guide](docs/kubernetes_setup.md#6-deployment-profile-options-gtp-u-or-quic-only)).*
+*Note: To run GTP-U or QUIC exclusively, pass `--set quic.enabled=false` or `--set gtpu.enabled=false` overrides to your `core` and `ran` Helm commands (details in the [Kubernetes Setup Guide](k8s/README.md)).*
 
 ---
 
