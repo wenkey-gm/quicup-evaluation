@@ -1,0 +1,17 @@
+{{- if .Values.upf.gtpu.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-gtpu-gnb-config
+data:
+  open5gs-gnb.yaml: |
+{{ .Files.Get "configs/ran/gtpu/open5gs-gnb-gtpu.yaml" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-gtpu-ue-config
+data:
+  open5gs-ue.yaml: |
+{{ .Files.Get "configs/ran/gtpu/open5gs-ue-gtpu.yaml" | nindent 4 }}
+{{- end }}

@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-gnb-gtpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-gnb-gtpu
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-gnb-gtpu
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "n2-bridge",
+              "interface": "net1",
+              "ips": ["10.40.0.3/24"]
+            },
+            {
+              "name": "open5gs-upf-n3-gtpu",
+              "interface": "net2",
+              "ips": ["10.30.0.3/24"]
+            },
+            {
+              "name": "ueransim-gtpu",
+              "interface": "net3",
+              "ips": ["10.50.0.3/24"]
+            }
+          ]
+    spec:
+      nodeSelector:
+        tier: ueransim-gnb-gtpu
+      containers:
+        - name: ueransim-gnb-gtpu
+          image: ueransim-gnb:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+          ports:
+            - containerPort: 38412
+              protocol: SCTP
+            - containerPort: 2152
+              protocol: UDP
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml
+          volumeMounts:
+            - name: gnb-config-vol
+              mountPath: /ueransim/config/open5gs-gnb.yaml
+              subPath: open5gs-gnb.yaml
+      volumes:
+        - name: gnb-config-vol
+          configMap:
+            name: open5gs-gtpu-gnb-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-ue-gtpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-ue-gtpu
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-ue-gtpu
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "ueransim-gtpu",
+              "interface": "net1",
+              "ips": ["10.50.0.10/24"]
+            }
+          ]
+    spec:
+      nodeSelector:
+        tier: ueransim-ue-gtpu
+      containers:
+        - name: ueransim-ue-gtpu
+          image: ueransim-ue:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 15 &&
+              build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+              until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+              wait
+          volumeMounts:
+            - name: ue-config-vol
+              mountPath: /ueransim/config/open5gs-ue.yaml
+              subPath: open5gs-ue.yaml
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+      volumes:
+        - name: ue-config-vol
+          configMap:
+            name: open5gs-gtpu-ue-config
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
