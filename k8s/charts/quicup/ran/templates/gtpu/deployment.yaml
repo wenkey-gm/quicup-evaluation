@@ -1,25 +1,43 @@
+{{- if .Values.gtpu.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { .Values.gnb.name } }
+  name: ueransim-gnb-gtpu
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: { { .Values.gnb.name } }
+      app: ueransim-gnb-gtpu
   minReadySeconds: 10
   template:
     metadata:
       labels:
-        app: { { .Values.gnb.name } }
+        app: ueransim-gnb-gtpu
       annotations:
-        k8s.v1.cni.cncf.io/networks: { { .Values.gnb.multus_cni_network_link } }
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "n2-bridge",
+              "interface": "net1",
+              "ips": ["10.40.0.3/24"]
+            },
+            {
+              "name": "open5gs-upf-n3-gtpu",
+              "interface": "net2",
+              "ips": ["10.30.0.3/24"]
+            },
+            {
+              "name": "ueransim-gtpu",
+              "interface": "net3",
+              "ips": ["10.50.0.3/24"]
+            }
+          ]
     spec:
       nodeSelector:
-        tier: { { .Values.gnb.name } }
+        tier: ueransim-gnb-gtpu
       containers:
-        - name: { { .Values.gnb.name } }
-          image: ueransim-gnb:latest
+        - name: ueransim-gnb-gtpu
+          image: {{ .Values.images.ueransim_gnb }}
           resources:
             requests:
               memory: "512Mi"
@@ -47,31 +65,38 @@ spec:
       volumes:
         - name: gnb-config-vol
           configMap:
-            name: { { .Values.gnb.config_map_name } }
+            name: ueransim-gnb-gtpu-config
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { .Values.ue.name } }
+  name: ueransim-ue-gtpu
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: { { .Values.ue.name } }
+      app: ueransim-ue-gtpu
   minReadySeconds: 10
   template:
     metadata:
       labels:
-        app: { { .Values.ue.name } }
+        app: ueransim-ue-gtpu
       annotations:
-        k8s.v1.cni.cncf.io/networks: { { .Values.ue.multus_cni_network_link } }
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "ueransim-gtpu",
+              "interface": "net1",
+              "ips": ["10.50.0.10/24"]
+            }
+          ]
     spec:
       nodeSelector:
-        tier: { { .Values.ue.name } }
+        tier: ueransim-ue-gtpu
       containers:
-        - name: { { .Values.ue.name } }
-          image: ueransim-ue:latest
+        - name: ueransim-ue-gtpu
+          image: {{ .Values.images.ueransim_ue }}
           resources:
             requests:
               memory: "512Mi"
@@ -100,7 +125,8 @@ spec:
       volumes:
         - name: ue-config-vol
           configMap:
-            name: { { .Values.ue.config_map_name } }
+            name: ueransim-ue-gtpu-config
         - name: dev-net-tun
           hostPath:
             path: /dev/net/tun
+{{- end}}

@@ -1,0 +1,132 @@
+{{- if .Values.quic.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-gnb-quic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-gnb-quic
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-gnb-quic
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "n2-bridge",
+              "interface": "net1",
+              "ips": ["10.40.0.4/24"]
+            },
+            {
+              "name": "open5gs-upf-n3-quic",
+              "interface": "net2",
+              "ips": ["10.70.0.3/24"]
+            },
+            {
+              "name": "ueransim-quic",
+              "interface": "net3",
+              "ips": ["10.60.0.3/24"]
+            }
+          ]
+    spec:
+      nodeSelector:
+        tier: ueransim-gnb-quic
+      containers:
+        - name: ueransim-gnb-quic
+          image: {{ .Values.images.ueransim_gnb }}
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            capabilities:
+              add:
+                - "NET_ADMIN"
+          ports:
+            - containerPort: 38412
+              protocol: SCTP
+            - containerPort: 2152
+              protocol: UDP
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 10 && build/nr-gnb -c /ueransim/config/open5gs-gnb.yaml
+          volumeMounts:
+            - name: gnb-config-vol
+              mountPath: /ueransim/config/open5gs-gnb.yaml
+              subPath: open5gs-gnb.yaml
+      volumes:
+        - name: gnb-config-vol
+          configMap:
+            name:  ueransim-gnb-quic-config
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ueransim-ue-quic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ueransim-ue-quic
+  minReadySeconds: 10
+  template:
+    metadata:
+      labels:
+        app: ueransim-ue-quic
+      annotations:
+        k8s.v1.cni.cncf.io/networks: |
+          [
+            {
+              "name": "ueransim-quic",
+              "interface": "net1",
+              "ips": ["10.60.0.10/24"]
+            }
+          ]
+    spec:
+      nodeSelector:
+        tier: ueransim-ue-quic
+      containers:
+        - name: ueransim-ue-quic
+          image: {{ .Values.images.ueransim_ue }}
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              sleep 15 &&
+              build/nr-ue -c /ueransim/config/open5gs-ue.yaml &
+              until ip link show uesimtun0 >/dev/null 2>&1; do sleep 1; done;
+              wait
+          volumeMounts:
+            - name: ue-config-vol
+              mountPath: /ueransim/config/open5gs-ue.yaml
+              subPath: open5gs-ue.yaml
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+      volumes:
+        - name: ue-config-vol
+          configMap:
+            name: ueransim-ue-quic-config
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
+{{- end }}
