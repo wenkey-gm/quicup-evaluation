@@ -19,7 +19,7 @@ services:
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.open5gs.webui
-    image: ${USER}/open5gs-webui
+    image: ${REGISTRY-localhost:5001}/open5gs-webui
     container_name: open5gs-webui
     restart: unless-stopped
     networks:
@@ -35,15 +35,14 @@ services:
   run:
     depends_on:
       - mongodb
-    pull_policy: never
     build:
       context: ..
       dockerfile: ./config/docker/Dockerfile.open5gs.run
       args:
         dist: ${DIST-ubuntu}
         tag: ${TAG-24.04}
-        username: ${USER}
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+        username: ${REGISTRY-localhost:5001}
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     restart: unless-stopped
     networks:
       ogs_core_network:
@@ -58,12 +57,14 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/amf.yaml:/usr/local/etc/open5gs/amf.yaml:Z
+      - ../config/open5gs/services/smf.yaml:/usr/local/etc/open5gs/smf.yaml:Z
       - ../config/secrets:/secrets:Z
     environment:
       - DB_URI=mongodb://10.30.0.2:27018/open5gs
-    command: >
-      /bin/bash -c "
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "
       /wait &&
       open5gs-nrfd -D && sleep 2 &&
       open5gs-scpd -D && sleep 2 &&
@@ -80,7 +81,7 @@ services:
 
   upf-gtpu:
     profiles: ["gtpu"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu
     restart: unless-stopped
     networks:
@@ -95,10 +96,11 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-gtpu.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../config/secrets:/secrets:Z
+    entrypoint: ["/bin/bash", "-c"]
     command: >
-      /bin/bash -c "
+      "
       ip tuntap add name ogstun mode tun 2>/dev/null || true &&
       ip addr del 10.45.0.1/16 dev ogstun 2>/dev/null || true &&
       ip addr add 10.45.0.1/16 dev ogstun &&
@@ -106,12 +108,11 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       iperf3 -s -B 10.45.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
-      "
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
   upf-quic:
     profiles: ["quic"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-quic
     restart: unless-stopped
     networks:
@@ -126,10 +127,11 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-quic.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../config/secrets:/secrets:Z
-    command: >
-      /bin/bash -c "
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "
       ip tuntap add name ogstun mode tun 2>/dev/null || true &&
       ip addr del 10.46.0.1/16 dev ogstun 2>/dev/null || true &&
       ip addr add 10.46.0.1/16 dev ogstun &&
@@ -137,12 +139,11 @@ services:
       ip addr add 2001:db8:cafe::1/48 dev ogstun &&
       ip link set ogstun up &&
       iperf3 -s -B 10.46.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-quic.yaml
-      "
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
   upf-gtpu-ipsec:
     profiles: ["ipsec"]
-    image: ${USER}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
+    image: ${REGISTRY-localhost:5001}/${DIST-ubuntu}-${TAG-24.04}-open5gs-run
     container_name: open5gs-upf-gtpu-ipsec
     restart: unless-stopped
     networks:
@@ -157,12 +158,13 @@ services:
     sysctls:
       - net.ipv4.ip_forward=1
     volumes:
-      - ../config/open5gs/services:/usr/local/etc/open5gs:Z
+      - ../config/open5gs/services/upf-gtpu-ipsec.yaml:/usr/local/etc/open5gs/upf.yaml:Z
       - ../ipsec:/ipsec:Z
     environment:
       - IPSEC=true
-    command: >
-      /bin/bash -c "
+    entrypoint: ["/bin/bash", "-c"]
+    command: >-
+      "
       ip tuntap add name ogstun mode tun 2>/dev/null || true &&
       ip addr del 10.47.0.1/16 dev ogstun 2>/dev/null || true &&
       ip addr add 10.47.0.1/16 dev ogstun &&
@@ -171,8 +173,7 @@ services:
       ip link set ogstun up &&
       /ipsec/ipsec_setup.sh upf_ipsec_gtpu.conf &&
       iperf3 -s -B 10.47.0.1 --json -D &&
-      open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu-ipsec.yaml
-      "
+      open5gs-upfd -c /usr/local/etc/open5gs/upf.yaml"
 
 volumes:
   mongodb: {}

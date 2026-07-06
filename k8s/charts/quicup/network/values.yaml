@@ -1,0 +1,5 @@
+gtpu:
+  enabled: true
+
+quic:
+  enabled: true

@@ -1,0 +1,51 @@
+flowchart LR
+
+	classDef cluster fill:#F7F7F7,stroke:#666,stroke-width:2px,color:#222;
+	classDef control fill:#FFF4DB,stroke:#C98A1A,stroke-width:2px,color:#6A4600;
+	classDef core fill:#E9F2FF,stroke:#2F6FDF,stroke-width:2px,color:#10356F;
+	classDef ran fill:#E8F7EC,stroke:#2E9B4B,stroke-width:2px,color:#114D22;
+	classDef storage fill:#FDEBEC,stroke:#D64545,stroke-width:2px,color:#7A1E1E;
+
+	subgraph CORE_CLUSTER["Kind cluster: phonson-cluster"]
+		direction TB
+
+		CORE_CP["control-plane"]
+		CORE_SVC["open5gs-services"]
+		CORE_DB["mongo db"]
+		CORE_UPF["open5gs-upf"]
+		CORE_WEB["open5gs-webui"]
+	end
+
+	subgraph RAN_CLUSTER["Kind cluster: phonton-cluster"]
+		direction TB
+
+		RAN_CP["control-plane"]
+		RAN_GNB["ueransim-gnb"]
+		RAN_UE["ueransim-ue"]
+	end
+
+	REPO["Shared config files"]
+
+	REPO -.-> CORE_SVC
+	REPO -.-> CORE_DB
+	REPO -.-> CORE_UPF
+	REPO -.-> CORE_WEB
+	REPO -.-> RAN_GNB
+	REPO -.-> RAN_UE
+
+	CORE_CP --- CORE_SVC
+	CORE_CP --- CORE_DB
+	CORE_CP --- CORE_UPF
+	CORE_CP --- CORE_WEB
+
+	RAN_CP --- RAN_GNB
+	RAN_CP --- RAN_UE
+	RAN_GNB --- RAN_UE
+
+	class CORE_CP control;
+	class CORE_SVC,CORE_UPF core;
+	class CORE_DB storage;
+	class CORE_WEB core;
+	class RAN_CP control;
+	class RAN_GNB,RAN_UE ran;
+	class REPO cluster;

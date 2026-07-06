@@ -1,0 +1,78 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: phonson-cluster
+containerdConfigPatches:
+  - |
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
+      endpoint = ["http://kind-registry:5000"]
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-services"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-subscriber-db"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-gtpu-upf"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-quic-upf"
+            allowed-unsafe-sysctls: "net.ipv4.ip_forward"
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "tier=open5gs-webui"
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 30080
+        listenAddress: "127.0.0.1"
+        protocol: TCP
+    extraMounts:
+      - hostPath: /usr/libexec/cni/
+        containerPath: /opt/cni/bin/

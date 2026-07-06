@@ -1,0 +1,9 @@
+gtpu:
+  enabled: true
+
+quic:
+  enabled: true
+
+images:
+  open5gs_webui: localhost:5001/open5gs-webui:latest
+  open5gs_core: localhost:5001/ubuntu-24.04-open5gs-run

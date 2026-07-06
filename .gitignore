@@ -10,6 +10,7 @@ home/
 .idea/
 .cache/
 config/secrets/
+k8s/manifests/core/secrets/
 
 # OS
 .DS_Store

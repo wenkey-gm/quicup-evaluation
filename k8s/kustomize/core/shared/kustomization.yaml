@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ../../nads
+
+configMapGenerator:
+  - name: open5gs-core-config
+    files:
+      - configs/services/amf.yaml
+      - configs/services/smf.yaml
+
+  - name: open5gs-mongodb-config
+    files:
+      - configs/mongo/mongo-init.js
+
+secretGenerator:
+  - name: open5gs-core-secrets
+    files:
+      - server.key=secrets/server.key
+      - server.crt=secrets/server.crt
+
+images:
+  - name: open5gs-webui
+    newName: localhost:5001/open5gs-webui
+    newTag: latest
+  - name: open5gs-run
+    newName: localhost:5001/ubuntu-24.04-open5gs-run
+    newTag: latest

@@ -1,0 +1,9 @@
+gtpu:
+  enabled: true
+
+quic:
+  enabled: true
+
+images:
+  ueransim_gnb: localhost:5001/ubuntu-24.04-ueransim-gnb:latest
+  ueransim_ue: localhost:5001/ubuntu-24.04-ueransim-ue:latest

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-mongodb-config
+data:
+  mongo-init.js: |
+{{.Files.Get "configs/mongo/mongo-init.js" | indent 4}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-core-config
+data:
+  amf.yaml: |
+{{.Files.Get "configs/services/amf.yaml" | indent 4}}
+  smf.yaml: |
+{{.Files.Get "configs/services/smf.yaml" | indent 4}}

@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open5gs-upf-gtpu
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open5gs-upf-gtpu
+  minReadySeconds: 10
+  template:
+    metadata:
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[
+          {
+          "name": "open5gs-upf-n4",
+          "interface": "net1",
+          "ips": ["10.10.0.2/24"]
+          },
+          {
+          "name": "open5gs-upf-n3-gtpu",
+          "interface": "net2",
+          "ips": ["10.30.0.2/24"]
+          }
+          ]'
+      labels:
+        app: open5gs-upf-gtpu
+    spec:
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+      nodeSelector:
+        tier: open5gs-gtpu-upf
+      containers:
+        - name: open5gs-gtpu-upf
+          image: open5gs-run:latest
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          ports:
+            - containerPort: 2152
+              protocol: UDP
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+          command: ["/bin/bash", "-c"]
+          args:
+            - >-
+              ip tuntap add name ogstun mode tun 2>/dev/null || true &&
+              ip addr del 10.45.0.1/16 dev ogstun 2>/dev/null || true &&
+              ip addr add 10.45.0.1/16 dev ogstun &&
+              ip addr del 2001:db8:cafe::1/48 dev ogstun 2>/dev/null || true &&
+              ip addr add 2001:db8:cafe::1/48 dev ogstun &&
+              ip link set ogstun up &&
+              iperf3 -s -B 10.45.0.1 --json -D &&
+              open5gs-upfd -c /usr/local/etc/open5gs/upf-gtpu.yaml
+
+          volumeMounts:
+            - name: open5gs-upf-config-vol
+              mountPath: /usr/local/etc/open5gs/upf-gtpu.yaml
+              subPath: upf-gtpu.yaml
+            - name: open5gs-core-secrets-vol
+              mountPath: /secrets
+            - name: dev-net-tun
+              mountPath: /dev/net/tun
+      volumes:
+        - name: open5gs-upf-config-vol
+          configMap:
+            name: open5gs-upf-config
+        - name: open5gs-core-secrets-vol
+          secret:
+            secretName: open5gs-core-secrets
+        - name: dev-net-tun
+          hostPath:
+            path: /dev/net/tun
