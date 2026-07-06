@@ -1,3 +1,4 @@
+{{- if .Values.gtpu.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,7 +35,7 @@ spec:
         tier: open5gs-gtpu-upf
       containers:
         - name: open5gs-gtpu-upf
-          image: open5gs-run:latest
+          image: {{ .Values.images.open5gs_core }}
           resources:
             requests:
               memory: "512Mi"
@@ -73,10 +74,11 @@ spec:
       volumes:
         - name: open5gs-upf-config-vol
           configMap:
-            name: open5gs-upf-config
+            name: open5gs-upf-config-gtpu
         - name: open5gs-core-secrets-vol
           secret:
             secretName: open5gs-core-secrets
         - name: dev-net-tun
           hostPath:
             path: /dev/net/tun
+{{- end }}

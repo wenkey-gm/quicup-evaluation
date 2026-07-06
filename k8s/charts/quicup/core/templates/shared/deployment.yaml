@@ -72,7 +72,7 @@ spec:
         tier: open5gs-webui
       containers:
         - name: open5gs-webui
-          image: open5gs-webui:latest
+          image: "{{ .Values.images.open5gs_webui }}"
           ports:
             - containerPort: 9999
           resources:
@@ -128,7 +128,7 @@ spec:
         tier: open5gs-services
       containers:
         - name: open5gs-core
-          image: open5gs-run:latest
+          image: "{{ .Values.images.open5gs_core }}"
           resources:
             requests:
               memory: "512Mi"

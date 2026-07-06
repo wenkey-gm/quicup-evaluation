@@ -1,3 +1,4 @@
+{{- if .Values.gtpu.enabled }}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -13,7 +14,7 @@ spec:
         "type": "static"
       }
     }
-
+{{- end }}
 ---
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
@@ -49,6 +50,7 @@ spec:
     }
 
 ---
+{{- if .Values.quic.enabled }}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -64,8 +66,10 @@ spec:
         "type": "static"
       }
     }
+{{- end }}
 
 ---
+{{- if .Values.gtpu.enabled }}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -81,8 +85,10 @@ spec:
         "type": "static"
       }
     }
+{{- end }}
 
 ---
+{{- if .Values.quic.enabled }}
 apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
@@ -98,3 +104,4 @@ spec:
         "type": "static"
       }
     }
+{{- end }}

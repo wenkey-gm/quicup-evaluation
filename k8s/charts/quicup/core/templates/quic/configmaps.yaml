@@ -1,0 +1,9 @@
+{{- if .Values.quic.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open5gs-upf-config-quic
+data:
+  upf-quic.yaml: |
+{{.Files.Get "configs/services/upf-quic.yaml" | indent 4}}
+{{- end }}
