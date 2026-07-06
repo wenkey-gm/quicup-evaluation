@@ -27,7 +27,7 @@ This project supports two execution environments:
 
 ## Deployment Option Comparison
 
-| Feature | 🐳 Docker Compose | ☸️ Kubernetes & Helm |
+| Feature | Docker Compose | Kubernetes & Helm |
 | :--- | :--- | :--- |
 | **Primary Use Case** | Fast config debugging & local testing | Cloud-native production simulation |
 | **Networking CNI** | Docker Bridge Networks | Multus CNI (Macvlan Host Bridges) |
