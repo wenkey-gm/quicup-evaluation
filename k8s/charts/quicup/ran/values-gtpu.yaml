@@ -1,0 +1,35 @@
+gnb:
+  name: ueransim-gnb-gtpu
+  config_map_name: gtpu-gnb-config
+  config_path: configs/ran/gtpu/open5gs-gnb-gtpu.yaml
+  multus_cni_network_link: |
+    [
+      {
+        "name": "n2-bridge",
+        "interface": "net1",
+        "ips": ["10.40.0.3/24"]
+      },
+      {
+        "name": "open5gs-upf-n3-gtpu",
+        "interface": "net2",
+        "ips": ["10.30.0.3/24"]
+      },
+      {
+        "name": "ueransim-gtpu",
+        "interface": "net3",
+        "ips": ["10.50.0.3/24"]
+      }
+    ]
+
+ue:
+  name: ueransim-ue-gtpu
+  config_map_name: gtpu-ue-config
+  config_path: configs/ran/gtpu/open5gs-ue-gtpu.yaml
+  multus_cni_network_link: |
+    [
+      {
+        "name": "ueransim-gtpu",
+        "interface": "net1",
+        "ips": ["10.50.0.10/24"]
+      }
+    ]

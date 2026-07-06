@@ -1,6 +1,6 @@
 apiVersion: v2
-name: quicup
-description: A Kubernetes deployment of QUICUP — a QUIC-based 5G user-plane tunnel evaluated alongside standard GTP-U, using Open5GS and UERANSIM with Multus CNI multi-interface networking.
+name: ran
+description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #

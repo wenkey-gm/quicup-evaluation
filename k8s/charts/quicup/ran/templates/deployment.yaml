@@ -1,41 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ueransim-gnb-quic
+  name: { { .Values.gnb.name } }
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ueransim-gnb-quic
+      app: { { .Values.gnb.name } }
   minReadySeconds: 10
   template:
     metadata:
       labels:
-        app: ueransim-gnb-quic
+        app: { { .Values.gnb.name } }
       annotations:
-        k8s.v1.cni.cncf.io/networks: |
-          [
-            {
-              "name": "n2-bridge",
-              "interface": "net1",
-              "ips": ["10.40.0.4/24"]
-            },
-            {
-              "name": "open5gs-upf-n3-quic",
-              "interface": "net2",
-              "ips": ["10.70.0.3/24"]
-            },
-            {
-              "name": "ueransim-quic",
-              "interface": "net3",
-              "ips": ["10.60.0.3/24"]
-            }
-          ]
+        k8s.v1.cni.cncf.io/networks: { { .Values.gnb.multus_cni_network_link } }
     spec:
       nodeSelector:
-        tier: ueransim-gnb-quic
+        tier: { { .Values.gnb.name } }
       containers:
-        - name: ueransim-gnb-quic
+        - name: { { .Values.gnb.name } }
           image: ueransim-gnb:latest
           resources:
             requests:
@@ -64,37 +47,30 @@ spec:
       volumes:
         - name: gnb-config-vol
           configMap:
-            name: open5gs-quic-gnb-config
+            name: { { .Values.gnb.config_map_name } }
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ueransim-ue-quic
+  name: { { .Values.ue.name } }
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ueransim-ue-quic
+      app: { { .Values.ue.name } }
   minReadySeconds: 10
   template:
     metadata:
       labels:
-        app: ueransim-ue-quic
+        app: { { .Values.ue.name } }
       annotations:
-        k8s.v1.cni.cncf.io/networks: |
-          [
-            {
-              "name": "ueransim-quic",
-              "interface": "net1",
-              "ips": ["10.60.0.10/24"]
-            }
-          ]
+        k8s.v1.cni.cncf.io/networks: { { .Values.ue.multus_cni_network_link } }
     spec:
       nodeSelector:
-        tier: ueransim-ue-quic
+        tier: { { .Values.ue.name } }
       containers:
-        - name: ueransim-ue-quic
+        - name: { { .Values.ue.name } }
           image: ueransim-ue:latest
           resources:
             requests:
@@ -124,7 +100,7 @@ spec:
       volumes:
         - name: ue-config-vol
           configMap:
-            name: open5gs-quic-ue-config
+            name: { { .Values.ue.config_map_name } }
         - name: dev-net-tun
           hostPath:
             path: /dev/net/tun
