@@ -50,6 +50,11 @@ flowchart TD
 Ensure CNI plugins (specifically `macvlan`) are installed on your Fedora/Ubuntu host:
 * **Fedora:** `sudo dnf install kubernetes-cni`
 * **Ubuntu/Debian:** `sudo apt install kubernetes-cni`
+* Increase Host network buffers to avoid buffer overflow
+```bash
+sudo sysctl -w net.core.rmem_max=67108864
+sudo sysctl -w net.core.wmem_max=67108864
+```
 
 ### 2. Provision Kind Clusters
 Spin up the two separate clusters. They use mapping to mount the host's `/usr/libexec/cni/` path to the container runtimes inside the nodes:
