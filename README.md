@@ -1,4 +1,4 @@
-# QUICUP EVALUATION
+# QUICUP EVALUATION FOR 5G
 
 Containerized and Cloud-Native 5G network setup with QUICUP, GTP-U with IPSec, and GTP-U using Open5GS and UERANSIM.
 
