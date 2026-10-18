@@ -6,8 +6,6 @@ This project supports two execution environments:
 1. **Docker Compose Setup (Local Dev):** Lightweight, single-node container deployment utilizing profiles.
 2. **Kubernetes & Helm Setup (Cloud-Native):** Distributed multi-cluster orchestration using Helm, Kustomize, and Multus CNI.
 
----
-
 ## Results
 
 Under 50 Mbps load with emulated radio impairments, QUICUP matches GTP-U on median RTT (51.9 vs. 51.2 ms), but throughput drops to 13.9 vs. 50.0 Mbps. Cause: QUIC's loss-based CUBIC congestion control treats random radio loss as congestion.
