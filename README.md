@@ -8,6 +8,15 @@ This project supports two execution environments:
 
 ---
 
+## Results
+
+Under 50 Mbps load with emulated radio impairments, QUICUP matches GTP-U on median RTT (51.9 vs. 51.2 ms), but throughput drops to 13.9 vs. 50.0 Mbps. Cause: QUIC's loss-based CUBIC congestion control treats random radio loss as congestion.
+
+> [!NOTE]
+> All RTT, throughput and comparison plots are in [docs/art/plots](docs/art/plots).
+
+---
+
 ## Features
 
 - [x] Implement docker bridge and local profiles
